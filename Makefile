@@ -3,7 +3,7 @@
 
 BUILD_DIR := build
 
-.PHONY: all core ui tests clean rebuild
+.PHONY: all core ui tests clean rebuild examples
 
 # Default: build core only
 all: core
@@ -16,6 +16,11 @@ core:
 # Build with UI module (includes LVGL)
 ui:
 	cmake -B $(BUILD_DIR) -DSIERA_ENABLE_UI=ON
+	cmake --build $(BUILD_DIR)
+
+# Build examples
+examples:
+	cmake -B $(BUILD_DIR) -DSIERA_BUILD_EXAMPLES=ON
 	cmake --build $(BUILD_DIR)
 
 # Build with tests

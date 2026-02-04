@@ -20,8 +20,16 @@ option(SIERA_ENABLE_UI "Build the UI module (includes LVGL)" OFF)
 option(SIERA_BUILD_TESTS "Build unit tests" OFF)
 option(SIERA_BUILD_EXAMPLES "Build examples" OFF)
 
+# Enable simulator drivers when building examples
+if(SIERA_BUILD_EXAMPLES)
+    set(SIERA_DRIVER_SIMULATOR ON CACHE BOOL "" FORCE)
+endif()
+
 # Core is always built
 add_subdirectory(src/core)
+
+# Drivers (platform-specific implementations)
+add_subdirectory(src/driver)
 
 # UI is optional
 if(SIERA_ENABLE_UI)

@@ -13,9 +13,26 @@ FetchContent_Declare(
 set(TESTS OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(cpputest)
 
-# Add module tests
-add_subdirectory(core)
+# Collect all test sources
+file(GLOB_RECURSE TEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/core/*.cpp")
+file(GLOB_RECURSE DOUBLE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/doubles/*.c")
 
-if(SIERA_ENABLE_UI)
-    # add_subdirectory(ui)  # when UI tests exist
-endif()
+add_executable(test_core
+    ${TEST_SOURCES}
+    ${DOUBLE_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/TestRunner.cpp
+)
+
+target_include_directories(test_core
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/doubles/core/timer
+)
+
+target_link_libraries(test_core
+    PRIVATE
+        CppUTest
+        CppUTestExt
+        siera::core
+)
+
+add_test(NAME test_core COMMAND test_core)
