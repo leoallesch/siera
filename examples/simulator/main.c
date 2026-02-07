@@ -28,7 +28,7 @@ int main(void)
   hello_view_t hello_view;
   hello_view_init(&hello_view);
 
-  // screen_manager_show(&screen_manager, &hello_view.interface);
+  screen_manager_show(&screen_manager, &hello_view.interface);
 
   while(1) {
     uint32_t time_till_next = lv_timer_handler();
