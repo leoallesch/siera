@@ -46,7 +46,7 @@ void on_change(void* context, const void* data)
 
 int main(void)
 {
-printf("Starting Hello World Example\n");
+  printf("Starting Hello World Example\n");
   timer_controller_init(&timer_controller, timesource_simulator());
   database_init(&database, &config, &storage);
 

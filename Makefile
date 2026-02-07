@@ -3,7 +3,7 @@
 
 BUILD_DIR := build
 
-.PHONY: all core ui tests clean rebuild examples
+.PHONY: all core ui tests clean rebuild examples simulator
 
 # Default: build core only
 all: core
@@ -27,7 +27,12 @@ examples:
 tests:
 	cmake -B $(BUILD_DIR) -DSIERA_BUILD_TESTS=ON
 	cmake --build $(BUILD_DIR)
-	ctest --test-dir $(BUILD_DIR) --output-on-failure
+	ctest --test-dir $(BUILD_DIR) --output-on-failure --verbose
+
+# Build simulator example (LVGL + SDL)
+simulator:
+	cmake -B $(BUILD_DIR) -DSIERA_BUILD_EXAMPLES=ON -DSIERA_ENABLE_UI=ON
+	cmake --build $(BUILD_DIR)
 
 # Clean build directory
 clean:

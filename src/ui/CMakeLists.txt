@@ -4,10 +4,9 @@ include(FetchContent)
 
 set(LVGL_VERSION "v9.4.0" CACHE STRING "LVGL version to fetch")
 
-# Fetch LVGL
-set(CONFIG_LV_BUILD_DEMOS OFF) # for demos
-set(CONFIG_LV_BUILD_EXAMPLES OFF) # for examples
-set(CONFIG_LV_USE_THORVG_INTERNAL OFF) # for ThorVG
+set(CONFIG_LV_BUILD_DEMOS OFF)
+set(CONFIG_LV_BUILD_EXAMPLES OFF)
+set(CONFIG_LV_USE_THORVG_INTERNAL OFF)
 set(LV_BUILD_CONF_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lv_conf.h" CACHE STRING "" FORCE)
 
 FetchContent_Declare(
@@ -18,19 +17,22 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(lvgl)
 
-# UI module (currently interface-only, will add sources as wrappers are created)
-add_library(siera_ui INTERFACE)
+file(GLOB_RECURSE SIERA_UI_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.c")
+
+add_library(siera_ui ${SIERA_UI_SOURCES})
 add_library(siera::ui ALIAS siera_ui)
 
 target_link_libraries(siera_ui
-    INTERFACE
+    PUBLIC
         lvgl
         siera::core
 )
 
 target_include_directories(siera_ui
-    INTERFACE
+    PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/view>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/screen_manager>
 )
 
 message(STATUS "SIERA: UI module enabled (includes LVGL ${LVGL_VERSION})")

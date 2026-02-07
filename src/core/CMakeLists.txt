@@ -12,6 +12,7 @@ target_include_directories(siera_core
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/database>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/event>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/timer>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/state_machine>
 )
 
 target_compile_options(siera_core

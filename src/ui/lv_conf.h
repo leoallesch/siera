@@ -522,7 +522,7 @@
 #define LV_USE_OBJ_ID           0
 
 /**  Enable support widget names*/
-#define LV_USE_OBJ_NAME         0
+#define LV_USE_OBJ_NAME         1
 
 /** Automatically assign an ID when obj is created */
 #define LV_OBJ_ID_AUTO_ASSIGN   LV_USE_OBJ_ID
@@ -1196,7 +1196,7 @@
 #endif /*LV_USE_TEST*/
 
 /** Enable loading XML UIs runtime */
-#define LV_USE_XML    0
+#define LV_USE_XML    1
 
 /** 1: Enable text translation support */
 #define LV_USE_TRANSLATION 0
@@ -1209,7 +1209,7 @@
  *==================*/
 
 /** Use SDL to open window on PC and handle mouse and keyboard. */
-#define LV_USE_SDL              0
+#define LV_USE_SDL              1
 #if LV_USE_SDL
     #define LV_SDL_INCLUDE_PATH     <SDL2/SDL.h>
     #define LV_SDL_RENDER_MODE      LV_DISPLAY_RENDER_MODE_DIRECT   /**< LV_DISPLAY_RENDER_MODE_DIRECT is recommended for best performance */
