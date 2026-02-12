@@ -9,3 +9,5 @@
 #define CONCAT(a, b) _CONCAT(a, b)
 
 #define NUM_ELEMENTS(array) (sizeof(array) / sizeof((array)[0]))
+
+#define COMMA ,

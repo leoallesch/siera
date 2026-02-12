@@ -14,16 +14,16 @@
     ENTRIES_LIST(DATABASE_EXPAND_AS_ENUM) \
   };
 
-typedef struct s_database_storage_t s_database_storage_t;
+typedef struct ram_storage_t ram_storage_t;
 
 #define DATABASE_STORAGE(ENTRIES_LIST)              \
-  typedef struct s_database_storage_t {             \
+  typedef struct ram_storage_t {                    \
     ENTRIES_LIST(DATABASE_EXPAND_AS_STORAGE_STRUCT) \
-  } s_database_storage_t;
+  } ram_storage_t;
 
-#define DATABASE_EXPAND_AS_ENTRY(name, type) { offsetof(s_database_storage_t, name), sizeof(type) },
+#define DATABASE_EXPAND_AS_ENTRY(name, type) { offsetof(ram_storage_t, name), sizeof(type) },
 
-//USAGE
+// USAGE
 
 // DATABASE_ENUM(DATABASE_ENTRIES)
 // DATABASE_STORAGE(DATABASE_ENTRIES)

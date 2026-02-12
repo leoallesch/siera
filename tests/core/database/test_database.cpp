@@ -40,7 +40,7 @@ static void mock_callback(void* context, const void* data)
 TEST_GROUP(Database)
 {
   s_database_t database;
-  s_database_storage_t storage;
+  ram_storage_t storage;
 
   void setup()
   {
@@ -136,9 +136,7 @@ TEST(Database, WritePublishesEventOnChange)
   event_subscription_init(&subscription, mock_callback, &ctx);
   database_subscribe_all(&database, &subscription);
 
-  mock().expectOneCall("callback")
-    .withPointerParameter("context", &ctx)
-    .ignoreOtherParameters();
+  mock().expectOneCall("callback").withPointerParameter("context", &ctx).ignoreOtherParameters();
 
   uint8_t value = 42;
   database_write(&database, KEY_U8, &value);
@@ -167,13 +165,11 @@ TEST(Database, WritePublishesOnlyOnceForSameValue)
   event_subscription_init(&subscription, mock_callback, &ctx);
   database_subscribe_all(&database, &subscription);
 
-  mock().expectOneCall("callback")
-    .withPointerParameter("context", &ctx)
-    .ignoreOtherParameters();
+  mock().expectOneCall("callback").withPointerParameter("context", &ctx).ignoreOtherParameters();
 
   uint8_t value = 55;
   database_write(&database, KEY_U8, &value);
-  database_write(&database, KEY_U8, &value);  // Same value, no event
+  database_write(&database, KEY_U8, &value); // Same value, no event
 
   mock().checkExpectations();
 }

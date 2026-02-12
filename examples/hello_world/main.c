@@ -24,7 +24,7 @@ static const s_database_config_t config = {
 
 s_timer_controller_t timer_controller;
 s_database_t database;
-s_database_storage_t storage;
+ram_storage_t storage;
 s_timer_t timer;
 event_subscription_t sub;
 

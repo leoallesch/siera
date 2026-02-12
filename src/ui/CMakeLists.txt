@@ -32,7 +32,7 @@ target_include_directories(siera_ui
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/view>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/screen_manager>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/display>
 )
 
 message(STATUS "SIERA: UI module enabled (includes LVGL ${LVGL_VERSION})")

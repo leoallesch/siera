@@ -136,7 +136,7 @@ typedef struct {
 
 // Change notification payload
 typedef struct {
-    s_key_t key;
+    datastream_key_t key;
     const void* data;
 } s_database_on_change_args_t;
 ```
@@ -165,13 +165,13 @@ struct view_t {
      * Keys this view cares about. Screen manager checks this before
      * calling on_update. NULL-terminated array.
      */
-    const s_key_t* relevant_keys;
+    const datastream_key_t* relevant_keys;
 
     /**
      * Called when a relevant key changes in the database.
      * View implementation updates its widgets based on key and data.
      */
-    void (*on_update)(view_t* self, s_key_t key, const void* data);
+    void (*on_update)(view_t* self, datastream_key_t key, const void* data);
 
     /**
      * Called when view becomes active. Create/show widgets.
@@ -213,14 +213,14 @@ typedef struct {
 static home_view_impl_t home_impl;
 
 // Keys this view displays
-static const s_key_t home_keys[] = {
+static const datastream_key_t home_keys[] = {
     KEY_TEMPERATURE,
     KEY_HUMIDITY,
     KEY_COUNT  // Sentinel (use KEY_COUNT or define VIEW_KEY_END)
 };
 
 // Update widgets when data changes
-static void home_on_update(view_t* self, s_key_t key, const void* data)
+static void home_on_update(view_t* self, datastream_key_t key, const void* data)
 {
     home_view_impl_t* impl = self->impl;
 
@@ -371,10 +371,10 @@ view_t* screen_manager_get_active(screen_manager_t* mgr);
 ```c
 // screen_manager.c
 
-static bool key_is_relevant(const s_key_t* keys, s_key_t key)
+static bool key_is_relevant(const datastream_key_t* keys, datastream_key_t key)
 {
     if (!keys) return false;
-    for (const s_key_t* k = keys; *k != KEY_COUNT; k++) {
+    for (const datastream_key_t* k = keys; *k != KEY_COUNT; k++) {
         if (*k == key) return true;
     }
     return false;
@@ -617,7 +617,7 @@ Create a mock/console view implementation for testing:
 ```c
 // test_view.c - Console-based view for testing
 
-static void test_on_update(view_t* self, s_key_t key, const void* data)
+static void test_on_update(view_t* self, datastream_key_t key, const void* data)
 {
     printf("View update: key=%d\n", key);
 }
@@ -632,7 +632,7 @@ static void test_on_unload(view_t* self)
     printf("View unloaded\n");
 }
 
-static const s_key_t test_keys[] = { KEY_TEMPERATURE, KEY_COUNT };
+static const datastream_key_t test_keys[] = { KEY_TEMPERATURE, KEY_COUNT };
 
 view_t test_view = {
     .relevant_keys = test_keys,
@@ -739,13 +739,13 @@ typedef struct {
 
 static home_view_impl_t home_impl;
 
-static const s_key_t home_keys[] = {
+static const datastream_key_t home_keys[] = {
     KEY_TEMPERATURE,
     KEY_HUMIDITY,
     KEY_COUNT
 };
 
-static void home_on_update(view_t* self, s_key_t key, const void* data)
+static void home_on_update(view_t* self, datastream_key_t key, const void* data)
 {
     home_view_impl_t* impl = self->impl;
 
