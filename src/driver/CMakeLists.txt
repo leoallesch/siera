@@ -29,6 +29,7 @@ if(SIERA_DRIVER_SOURCES)
     target_link_libraries(siera_driver
         PUBLIC
             siera::core
+            siera::lvgl
     )
 
     target_compile_options(siera_driver

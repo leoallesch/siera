@@ -14,6 +14,3 @@ void database_read(s_database_t* instance, datastream_key_t key, void* out);
 void database_write(s_database_t* instance, datastream_key_t key, const void* data);
 bool database_contains(s_database_t* instance, datastream_key_t key);
 uint8_t database_size(s_database_t* instance, datastream_key_t key);
-void database_subscribe_all(s_database_t* instance, event_subscription_t* subscription);
-void database_subscribe(s_database_t* instance, datastream_key_t key, event_subscription_t* subscription);
-void database_unsubscribe(s_database_t* instance, event_subscription_t* subscription);

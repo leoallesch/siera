@@ -33,6 +33,11 @@ void list_push(list_t* list, list_node_t* node)
 
 void list_delete(list_t* list, list_node_t* node)
 {
+  if(list->head == NULL)
+  {
+    return;
+  }
+  
   if(list->head == node) {
     list->head = list->head->next;
     return;

@@ -11,3 +11,5 @@
 #define NUM_ELEMENTS(array) (sizeof(array) / sizeof((array)[0]))
 
 #define COMMA ,
+
+#define WRAP(val, step, max) (((val) + (max) + ((step) % (int16_t)(max))) % (max))

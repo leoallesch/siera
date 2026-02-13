@@ -13,19 +13,22 @@ FetchContent_Declare(
 set(TESTS OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(cpputest)
 
-# Collect all test sources
+# Siera's own test sources
 file(GLOB_RECURSE TEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/core/*.cpp")
 file(GLOB_RECURSE DOUBLE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/doubles/*.c")
 
 add_executable(test_core
     ${TEST_SOURCES}
     ${DOUBLE_SOURCES}
+    ${SIERA_CONSUMER_TEST_SOURCES}
+    ${SIERA_CONSUMER_DOUBLE_SOURCES}
     ${CMAKE_CURRENT_SOURCE_DIR}/TestRunner.cpp
 )
 
 target_include_directories(test_core
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/doubles/core/timer
+        ${SIERA_CONSUMER_TEST_INCLUDE_DIRS}
 )
 
 target_link_libraries(test_core
@@ -33,6 +36,7 @@ target_link_libraries(test_core
         CppUTest
         CppUTestExt
         siera::core
+        ${SIERA_CONSUMER_TEST_LINK_LIBRARIES}
 )
 
 add_test(NAME test_core COMMAND test_core)

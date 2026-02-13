@@ -12,7 +12,8 @@ add_executable(simulator
 
 target_link_libraries(simulator
     PRIVATE
-        siera::ui
+        siera::lvgl
+        siera::driver
         lib-ui
         ${SDL2_LIBRARIES}
 )
