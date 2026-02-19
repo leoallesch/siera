@@ -21,3 +21,9 @@ target_compile_options(siera_core
 )
 
 message(STATUS "SIERA: Core module enabled")
+
+if(SIERA_ENABLE_COVERAGE)
+  target_compile_options(siera_core PRIVATE --coverage)
+  target_link_options(siera_core PUBLIC --coverage)
+  message(STATUS "SIERA: Coverage instrumentation enabled for core")
+endif()

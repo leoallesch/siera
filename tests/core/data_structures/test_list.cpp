@@ -132,3 +132,22 @@ TEST(ListTests, DeleteNonExistentDoesNothing)
 
   CHECK(list.head == &node1);
 }
+
+TEST(ListTests, DeleteFromEmptyListDoesNothing)
+{
+  list_node_t node;
+  list_delete(&list, &node);
+  CHECK(list.head == NULL);
+}
+
+TEST(ListTests, IsEmptyReturnsTrueWhenEmpty)
+{
+  CHECK_TRUE(list_is_empty(&list));
+}
+
+TEST(ListTests, IsEmptyReturnsFalseWhenNotEmpty)
+{
+  list_node_t node;
+  list_add_front(&list, &node);
+  CHECK_FALSE(list_is_empty(&list));
+}
