@@ -9,13 +9,7 @@ set(CONFIG_LV_BUILD_EXAMPLES OFF)
 set(CONFIG_LV_USE_THORVG_INTERNAL OFF)
 set(LV_BUILD_CONF_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lv_conf.h" CACHE STRING "" FORCE)
 
-FetchContent_Declare(
-    lvgl
-    GIT_REPOSITORY https://github.com/lvgl/lvgl.git
-    GIT_TAG        ${LVGL_VERSION}
-    GIT_SHALLOW    TRUE
-)
-FetchContent_MakeAvailable(lvgl)
+add_subdirectory(lib/lvgl)
 
 add_library(siera_lvgl INTERFACE)
 add_library(siera::lvgl ALIAS siera_lvgl)
