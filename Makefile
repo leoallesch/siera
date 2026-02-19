@@ -41,12 +41,12 @@ coverage:
 	cmake --build $(BUILD_DIR)
 	ctest --test-dir $(BUILD_DIR) --output-on-failure
 	lcov --capture --directory $(BUILD_DIR) --output-file $(BUILD_DIR)/coverage.info \
-	     --ignore-errors inconsistent,inconsistent
+	     --ignore-errors inconsistent,inconsistent,mismatch
 	lcov --remove $(BUILD_DIR)/coverage.info \
 	     '*/_deps/*' \
 	     '/usr/*' \
 	     --output-file $(BUILD_DIR)/coverage.info \
-	     --ignore-errors inconsistent,inconsistent,unused
+	     --ignore-errors inconsistent,inconsistent,mismatch,unused
 	genhtml $(BUILD_DIR)/coverage.info --output-directory $(COVERAGE_DIR)
 	@echo "Coverage report: $(COVERAGE_DIR)/index.html"
 

@@ -33,11 +33,11 @@ jobs:
         run: |
           lcov --capture --directory build \
                --output-file build/coverage.info \
-               --ignore-errors inconsistent,inconsistent
+               --ignore-errors inconsistent,inconsistent,mismatch
           lcov --remove build/coverage.info \
                '*/_deps/*' '/usr/*' \
                --output-file build/coverage.info \
-               --ignore-errors inconsistent,inconsistent,unused
+               --ignore-errors inconsistent,inconsistent,mismatch,unused
 
       - name: Enforce 80% line coverage
         run: |
