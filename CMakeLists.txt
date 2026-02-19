@@ -20,6 +20,7 @@ option(SIERA_ENABLE_LVGL "Build the LVGL module (fetches LVGL, implies SIERA_ENA
 # Build Options
 option(SIERA_BUILD_TESTS "Build unit tests" OFF)
 option(SIERA_BUILD_EXAMPLES "Build examples" OFF)
+option(SIERA_ENABLE_COVERAGE "Enable gcov code coverage instrumentation" OFF)
 
 # LVGL module implies UI module
 if(SIERA_ENABLE_LVGL)

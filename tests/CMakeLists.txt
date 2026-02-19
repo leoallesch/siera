@@ -40,3 +40,8 @@ target_link_libraries(test_core
 )
 
 add_test(NAME test_core COMMAND test_core)
+
+if(SIERA_ENABLE_COVERAGE)
+  target_compile_options(test_core PRIVATE --coverage)
+  target_link_options(test_core PRIVATE --coverage)
+endif()

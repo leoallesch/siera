@@ -208,3 +208,40 @@ TEST(TimerTests, run_returns_max_when_no_timers)
 
   CHECK_EQUAL(UINT32_MAX, ticks);
 }
+
+TEST(TimerTests, repeating_timer_overdue_fires_once_and_reschedules)
+{
+  // Advance time past two intervals at once; timer fires once and reschedules
+  timer_start_repeating(&timer, &controller, 100, mock_callback, nullptr);
+
+  mock().expectOneCall("callback").withPointerParameter("context", (void*)nullptr);
+  double_timesource_set_ticks(&timesource, 250);
+  timer_controller_run(&controller);
+  mock().checkExpectations();
+}
+
+TEST(TimerTests, run_returns_remaining_ticks_after_repeating_fires)
+{
+  timer_start_repeating(&timer, &controller, 100, mock_callback, nullptr);
+
+  mock().expectOneCall("callback").withPointerParameter("context", (void*)nullptr);
+  double_timesource_set_ticks(&timesource, 100);
+  timesource_ticks_t ticks = timer_controller_run(&controller);
+
+  // After firing at t=100 with interval 100, next expiry is t=200; ticks_to_next = 100
+  CHECK_EQUAL(100, ticks);
+  mock().checkExpectations();
+}
+
+TEST(TimerTests, advance_ticks_helper_works)
+{
+  double_timesource_advance_ticks(&timesource, 50);
+  double_timesource_advance_ticks(&timesource, 50);
+
+  timer_start_one_shot(&timer, &controller, 100, mock_callback, nullptr);
+  double_timesource_set_ticks(&timesource, 200);
+
+  mock().expectOneCall("callback").withPointerParameter("context", (void*)nullptr);
+  timer_controller_run(&controller);
+  mock().checkExpectations();
+}
