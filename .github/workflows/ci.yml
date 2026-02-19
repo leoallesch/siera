@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test-and-coverage:
+    name: Build, Test & Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y lcov
+
+      - name: Configure
+        run: >
+          cmake -B build
+          -DCMAKE_BUILD_TYPE=Debug
+          -DSIERA_BUILD_TESTS=ON
+          -DSIERA_ENABLE_COVERAGE=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Run tests
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Collect coverage
+        run: |
+          lcov --capture --directory build \
+               --output-file build/coverage.info \
+               --ignore-errors inconsistent,inconsistent,mismatch
+          lcov --remove build/coverage.info \
+               '*/_deps/*' '/usr/*' \
+               --output-file build/coverage.info \
+               --ignore-errors inconsistent,inconsistent,mismatch,unused
+
+      - name: Enforce 80% line coverage
+        run: |
+          pct=$(lcov --summary build/coverage.info 2>&1 \
+                | grep 'lines' | grep -oP '\d+\.\d+(?=%)' | head -1)
+          echo "Line coverage: ${pct}%"
+          awk -v pct="$pct" 'BEGIN { if (pct+0 < 80) { print "Coverage " pct "% is below 80% threshold"; exit 1 } }'
