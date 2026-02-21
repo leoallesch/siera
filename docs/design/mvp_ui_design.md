@@ -124,7 +124,7 @@ This document describes a reactive UI architecture for the SIERA embedded framew
 
 B### 2.1 Model Layer (Database)
 
-The Model is the existing SIERA `s_database_t` - a type-safe key-value store with change notifications.
+The Model is the existing SIERA `composite_datastream_t` - a type-safe key-value store with change notifications.
 
 ```c
 // Database structure (existing)
@@ -132,7 +132,7 @@ typedef struct {
     const s_database_config_t* config;
     void* storage;
     event_t on_change;  // Publishes s_database_on_change_args_t
-} s_database_t;
+} composite_datastream_t;
 
 // Change notification payload
 typedef struct {
@@ -177,7 +177,7 @@ struct view_t {
      * Called when view becomes active. Create/show widgets.
      * db and screen_mgr provided for input handling.
      */
-    void (*on_load)(view_t* self, s_database_t* db, struct screen_manager_t* mgr);
+    void (*on_load)(view_t* self, composite_datastream_t* db, struct screen_manager_t* mgr);
 
     /**
      * Called when view becomes inactive. Destroy/hide widgets.
@@ -206,7 +206,7 @@ typedef struct {
     lv_obj_t* lbl_temperature;
     lv_obj_t* lbl_humidity;
     lv_obj_t* btn_settings;
-    s_database_t* db;
+    composite_datastream_t* db;
     screen_manager_t* mgr;
 } home_view_impl_t;
 
@@ -250,7 +250,7 @@ static void on_settings_clicked(lv_event_t* e)
 }
 
 // Create widgets when view loads
-static void home_on_load(view_t* self, s_database_t* db, screen_manager_t* mgr)
+static void home_on_load(view_t* self, composite_datastream_t* db, screen_manager_t* mgr)
 {
     home_view_impl_t* impl = self->impl;
     impl->db = db;
@@ -342,7 +342,7 @@ The screen manager tracks the active view and routes database changes to it.
 ```c
 typedef struct screen_manager_t {
     view_t* active_view;
-    s_database_t* db;
+    composite_datastream_t* db;
     event_subscription_t db_sub;
 } screen_manager_t;
 ```
@@ -353,7 +353,7 @@ typedef struct screen_manager_t {
 /**
  * Initialize screen manager with database reference
  */
-void screen_manager_init(screen_manager_t* mgr, s_database_t* db);
+void screen_manager_init(screen_manager_t* mgr, composite_datastream_t* db);
 
 /**
  * Load a view (unloads current view first if any)
@@ -391,7 +391,7 @@ static void on_db_change(void* context, const void* args)
     }
 }
 
-void screen_manager_init(screen_manager_t* mgr, s_database_t* db)
+void screen_manager_init(screen_manager_t* mgr, composite_datastream_t* db)
 {
     mgr->active_view = NULL;
     mgr->db = db;
@@ -464,7 +464,7 @@ The UI integrates with the existing main loop pattern. No separate UI thread.
 #include "views/views.h"
 
 // Database
-static s_database_t db;
+static composite_datastream_t db;
 static app_database_storage_t db_storage;
 
 // Screen manager
@@ -475,7 +475,7 @@ static timer_t sensor_timer;
 
 static void sensor_timer_cb(void* ctx)
 {
-    s_database_t* db = ctx;
+    composite_datastream_t* db = ctx;
 
     // Simulate sensor reading
     static int16_t temp = 220;  // 22.0°C
@@ -622,7 +622,7 @@ static void test_on_update(view_t* self, datastream_key_t key, const void* data)
     printf("View update: key=%d\n", key);
 }
 
-static void test_on_load(view_t* self, s_database_t* db, screen_manager_t* mgr)
+static void test_on_load(view_t* self, composite_datastream_t* db, screen_manager_t* mgr)
 {
     printf("View loaded\n");
 }
@@ -733,7 +733,7 @@ typedef struct {
     lv_obj_t* lbl_temperature;
     lv_obj_t* lbl_humidity;
     lv_obj_t* btn_settings;
-    s_database_t* db;
+    composite_datastream_t* db;
     screen_manager_t* mgr;
 } home_view_impl_t;
 
@@ -771,7 +771,7 @@ static void on_settings_clicked(lv_event_t* e)
     screen_manager_goto(impl->mgr, &settings_view);
 }
 
-static void home_on_load(view_t* self, s_database_t* db, screen_manager_t* mgr)
+static void home_on_load(view_t* self, composite_datastream_t* db, screen_manager_t* mgr)
 {
     home_view_impl_t* impl = self->impl;
     impl->db = db;

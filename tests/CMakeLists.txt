@@ -1,47 +1,56 @@
-# SIERA Test Suite
+# ──────────────────────────────────────────────────────────────
+# SIERA unit tests
+# ──────────────────────────────────────────────────────────────
 
 include(FetchContent)
 
-# Fetch CppUTest
-set(CMAKE_POLICY_VERSION_MINIMUM 3.5 CACHE STRING "" FORCE)
 FetchContent_Declare(
     cpputest
     GIT_REPOSITORY https://github.com/cpputest/cpputest.git
     GIT_TAG        master
     GIT_SHALLOW    TRUE
 )
-set(TESTS OFF CACHE BOOL "" FORCE)
+
+# Prevent CppUTest from building its own tests
+set(TESTS OFF CACHE BOOL "Disable CppUTest self-tests" FORCE)
+
 FetchContent_MakeAvailable(cpputest)
 
-# Siera's own test sources
-file(GLOB_RECURSE TEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/core/*.cpp")
-file(GLOB_RECURSE DOUBLE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/doubles/*.c")
+# ──────────────────────────────────────────────────────────────
+# Test sources & mocks
+# ──────────────────────────────────────────────────────────────
 
-add_executable(test_core
-    ${TEST_SOURCES}
-    ${DOUBLE_SOURCES}
-    ${SIERA_CONSUMER_TEST_SOURCES}
-    ${SIERA_CONSUMER_DOUBLE_SOURCES}
-    ${CMAKE_CURRENT_SOURCE_DIR}/TestRunner.cpp
+file(GLOB_RECURSE TEST_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/core/*.cpp"
 )
 
-target_include_directories(test_core
+file(GLOB_RECURSE MOCK_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/doubles/*.c"
+)
+
+add_executable(test_siera
+    ${TEST_SOURCES}
+    ${MOCK_SOURCES}
+    TestRunner.cpp
+)
+
+target_include_directories(test_siera
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/doubles/core/timer
-        ${SIERA_CONSUMER_TEST_INCLUDE_DIRS}
+        # add more double include paths if needed later
 )
 
-target_link_libraries(test_core
+target_link_libraries(test_siera
     PRIVATE
+        siera
         CppUTest
         CppUTestExt
-        siera::core
-        ${SIERA_CONSUMER_TEST_LINK_LIBRARIES}
 )
 
-add_test(NAME test_core COMMAND test_core)
+add_test(NAME siera_unit_tests COMMAND test_siera)
 
+# Coverage support
 if(SIERA_ENABLE_COVERAGE)
-  target_compile_options(test_core PRIVATE --coverage)
-  target_link_options(test_core PRIVATE --coverage)
+    target_compile_options(test_siera PRIVATE --coverage -O0 -g)
+    target_link_options(test_siera    PRIVATE --coverage)
 endif()

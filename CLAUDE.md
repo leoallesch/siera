@@ -53,7 +53,7 @@ ctest --test-dir build
 
 ```
 src/
-├── core/                  # siera::core (always built)
+├── core/                  # always compiled into siera
 │   ├── data_structures/   # Intrusive list and queue
 │   ├── database/          # RAM datastream, database aggregator, schema macros
 │   ├── event/             # Publish-subscribe event system
@@ -62,11 +62,11 @@ src/
 │   ├── timer/             # Timer controller + timesource interface
 │   └── utils.h            # CONTAINER_OF, NUM_ELEMENTS, WRAP macros
 ├── driver/
-│   └── simulator/         # SDL2 display + mock timesource (host testing)
-├── ui/                    # siera::ui (conditional)
+│   └── simulator/         # SDL2 display + mock timesource (SIERA_DRIVER_SIMULATOR)
+├── ui/                    # compiled when SIERA_ENABLE_UI or SIERA_ENABLE_LVGL
 │   ├── display/           # i_display.h - abstract display update
 │   └── view/              # i_view.h - view lifecycle (load/unload)
-└── lvgl/                  # siera::lvgl (conditional, INTERFACE target)
+└── lvgl/                  # compiled when SIERA_ENABLE_LVGL
     └── lv_conf.h          # LVGL v9.4.0 config (RGB565, 64KB heap)
 
 tests/
@@ -186,7 +186,7 @@ my_item_t* item = CONTAINER_OF(node_ptr, my_item_t, node);
 
 ## CMake Conventions
 
-- All targets use namespace aliases: `siera::core`, `siera::ui`, `siera::lvgl`, `siera::driver`
+- All modules are compiled into a single `siera` target; link against `siera` directly
 - Never use global `include_directories()`, `link_libraries()`, or `add_compile_options()`
 - Use `target_*` commands with appropriate visibility (`PUBLIC`/`PRIVATE`/`INTERFACE`)
 - Use `$<BUILD_INTERFACE:...>` generator expressions for include paths

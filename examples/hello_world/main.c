@@ -23,14 +23,14 @@ static const s_database_config_t config = {
 };
 
 s_timer_controller_t timer_controller;
-s_database_t database;
+composite_datastream_t database;
 ram_storage_t storage;
 s_timer_t timer;
 event_subscription_t sub;
 
 void timer_cb(void* context)
 {
-  s_database_t* db = (s_database_t*)context;
+  composite_datastream_t* db = (composite_datastream_t*)context;
   uint16_t val;
   database_read(db, Key_TestInt, &val);
   val++;
