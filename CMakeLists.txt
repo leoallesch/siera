@@ -72,14 +72,11 @@ if(SIERA_DRIVER_SIMULATOR)
 endif()
 
 # ──────────────────────────────────────────────────────────────
-# ESP-IDF component mode
+# ESP-IDF component mode (unchanged — assumes lvgl comes from idf-component)
 # ──────────────────────────────────────────────────────────────
 
 if(ESP_PLATFORM)
-    # ESP-IDF names the component after the folder → expected name = siera
-
     if(SIERA_ENABLE_UI)
-        # We already have UI_SOURCES without lvgl/ subfolder
         list(APPEND SIERA_SOURCES ${UI_SOURCES})
 
         list(APPEND SIERA_INCLUDE_DIRS
@@ -91,14 +88,13 @@ if(ESP_PLATFORM)
         )
     endif()
 
-    # LVGL is expected to come from REQUIRES
     idf_component_register(
         SRCS            ${SIERA_SOURCES}
         INCLUDE_DIRS    ${SIERA_INCLUDE_DIRS}
-        REQUIRES        lvgl    # only added when actually used
+        REQUIRES        lvgl
     )
 
-    return()   # ── stop processing here for ESP-IDF ──
+    return()
 endif()
 
 # ──────────────────────────────────────────────────────────────
@@ -109,28 +105,48 @@ add_library(siera STATIC ${SIERA_SOURCES})
 
 target_include_directories(siera
     PUBLIC  ${SIERA_INCLUDE_DIRS}
-    PRIVATE ${CMAKE_CURRENT_BINARY_DIR}   # useful for generated files if any
+    PRIVATE ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 target_compile_options(siera PRIVATE
     -Wall
     -Wextra
-    # -Wpedantic   # consider adding later, many embedded projects disable it
+    # -Wpedantic
 )
 
 # ──────────────────────────────────────────────────────────────
-# LVGL integration (standalone only)
+# LVGL integration via FetchContent (standalone only)
 # ──────────────────────────────────────────────────────────────
 
 if(SIERA_ENABLE_LVGL)
-    # LVGL configuration before adding subdirectory
-    set(CONFIG_LV_BUILD_DEMOS       OFF CACHE BOOL "" FORCE)
-    set(CONFIG_LV_BUILD_EXAMPLES    OFF CACHE BOOL "" FORCE)
-    set(CONFIG_LV_USE_THORVG_INTERNAL OFF CACHE BOOL "" FORCE)
+    include(FetchContent)
 
-    add_subdirectory(${SRC_ROOT}/ui/lvgl/lvgl)
+    # You can also use GIT_TAG "release/v9.2.0" or "v9.1.0" etc.
+    # Or GIT_TAG "master" if you want bleeding edge.
+    set(LVGL_VERSION "v9.4.0" CACHE STRING "LVGL version to fetch")
 
-    list(APPEND SIERA_SOURCES ${LVGL_WRAPPER_SOURCES})
+    FetchContent_Declare(
+        lvgl
+        GIT_REPOSITORY https://github.com/lvgl/lvgl.git
+        GIT_TAG        ${LVGL_VERSION}
+    )
+
+    # Important: these must be set **before** MakeAvailable
+    # They help disable unwanted parts early
+    set(LV_USE_DRAW_SW  ON  CACHE BOOL "" FORCE)   # usually needed
+    set(LV_USE_DRAW_VG_LITE OFF CACHE BOOL "" FORCE)
+    set(LV_USE_DRAW_THORVG  OFF CACHE BOOL "" FORCE)
+    set(LV_BUILD_EXAMPLES   OFF CACHE BOOL "" FORCE)
+    set(LV_BUILD_DEMOS      OFF CACHE BOOL "" FORCE)
+    set(LV_BUILD_TEST       OFF CACHE BOOL "" FORCE)
+
+    # You can also set LV_CONF_PATH / LV_CONF_INCLUDE_SIMPLE here if needed
+    # Example:
+    # set(LV_CONF_PATH ${CMAKE_CURRENT_SOURCE_DIR}/lv_conf.h CACHE PATH "" FORCE)
+
+    FetchContent_MakeAvailable(lvgl)
+
+    # Now link your wrappers + lvgl
     target_sources(siera PRIVATE ${LVGL_WRAPPER_SOURCES})
 
     target_include_directories(siera PUBLIC
@@ -140,7 +156,7 @@ if(SIERA_ENABLE_LVGL)
 
     target_link_libraries(siera PUBLIC lvgl)
 
-    message(STATUS "SIERA: LVGL integration enabled")
+    message(STATUS "SIERA: LVGL ${LVGL_VERSION} fetched and integrated")
 endif()
 
 # ──────────────────────────────────────────────────────────────
