@@ -26,6 +26,7 @@ file(GLOB_RECURSE TEST_SOURCES
 
 file(GLOB_RECURSE MOCK_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/doubles/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/doubles/*.cpp"
 )
 
 add_executable(test_siera
@@ -37,6 +38,7 @@ add_executable(test_siera
 target_include_directories(test_siera
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/doubles/core/timer
+        ${CMAKE_CURRENT_SOURCE_DIR}/doubles/core/datastream
         # add more double include paths if needed later
 )
 
@@ -47,10 +49,13 @@ target_link_libraries(test_siera
         CppUTestExt
 )
 
+target_compile_options(test_siera PRIVATE -g)
+
 add_test(NAME siera_unit_tests COMMAND test_siera)
+
 
 # Coverage support
 if(SIERA_ENABLE_COVERAGE)
-    target_compile_options(test_siera PRIVATE --coverage -O0 -g)
+    target_compile_options(test_siera PRIVATE --coverage -O0)
     target_link_options(test_siera    PRIVATE --coverage)
 endif()

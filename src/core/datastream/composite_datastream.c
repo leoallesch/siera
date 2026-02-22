@@ -66,18 +66,18 @@ static void unsubscribe(i_datastream_t* interface, event_subscription_t* subscri
   }
 }
 
-void composite_datastream_init(composite_datastream_t* instance, i_datastream_t** streams, uint8_t count)
+void composite_datastream_init(composite_datastream_t* instance,
+  i_datastream_t** streams,
+  uint8_t count)
 {
   instance->streams = streams;
   instance->count = count;
 
-  instance->interface = (i_datastream_t){
-    .read = read,
-    .write = write,
-    .contains = contains,
-    .size = size,
-    .subscribe = subscribe,
-    .subscribe_all = subscribe_all,
-    .unsubscribe = unsubscribe,
-  };
+  instance->interface.read = read;
+  instance->interface.write = write;
+  instance->interface.contains = contains;
+  instance->interface.size = size;
+  instance->interface.subscribe = subscribe;
+  instance->interface.subscribe_all = subscribe_all;
+  instance->interface.unsubscribe = unsubscribe;
 }
