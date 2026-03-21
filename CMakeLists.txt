@@ -22,10 +22,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # ──────────────────────────────────────────────────────────────
 
 option(SIERA_ENABLE_UI          "Enable UI module (agnostic display/view interfaces)" OFF)
-option(SIERA_ENABLE_LVGL        "Enable LVGL integration (implies SIERA_ENABLE_UI)"    OFF)
+option(SIERA_ENABLE_LVGL        "Enable LVGL integration (implies SIERA_ENABLE_UI)"   OFF)
 option(SIERA_DRIVER_SIMULATOR   "Build simulator drivers for host testing"            OFF)
-option(SIERA_BUILD_TESTS        "Build unit tests"                                    OFF)
-option(SIERA_BUILD_EXAMPLES     "Build example applications"                         OFF)
 option(SIERA_ENABLE_COVERAGE    "Enable gcov code coverage instrumentation"           OFF)
 
 # LVGL implies UI
@@ -142,20 +140,3 @@ if(SIERA_ENABLE_LVGL)
 
     message(STATUS "SIERA: LVGL integration enabled")
 endif()
-
-# ──────────────────────────────────────────────────────────────
-# Test suite
-# ──────────────────────────────────────────────────────────────
-
-if(SIERA_BUILD_TESTS)
-    enable_testing()
-    add_subdirectory(tests)
-endif()
-
-# ──────────────────────────────────────────────────────────────
-# Optional: examples (not implemented yet)
-# ──────────────────────────────────────────────────────────────
-
-# if(SIERA_BUILD_EXAMPLES)
-#     add_subdirectory(examples)
-# endif()
