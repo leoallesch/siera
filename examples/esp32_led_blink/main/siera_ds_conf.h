@@ -1,0 +1,2 @@
+#define SIERA_DS_KEYS(KEY) \
+    KEY(LED_STATE, bool, SIERA_DS_GPIO, false, SIERA_DS_NONE)

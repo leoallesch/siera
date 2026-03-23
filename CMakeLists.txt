@@ -1,142 +1,143 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.14)
+
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
+
+include(SieraModule)
 
 # ──────────────────────────────────────────────────────────────
-# Project metadata
+# IDF early-expansion pass: collect component dependencies and exit.
+# CMAKE_BUILD_EARLY_EXPANSION is set by IDF during its first-pass dependency
+# scan; add_library and add_subdirectory are unavailable at this point.
+# Sources are registered in the normal build below (ESP_PLATFORM guard).
 # ──────────────────────────────────────────────────────────────
 
-project(siera
-    VERSION 0.1.0
-    DESCRIPTION "Simple Interface for Embedded Runtime Applications"
-    LANGUAGES C CXX
-)
-
-set(CMAKE_C_STANDARD   11)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-# ──────────────────────────────────────────────────────────────
-# Options
-# ──────────────────────────────────────────────────────────────
-
-option(SIERA_ENABLE_UI          "Enable UI module (agnostic display/view interfaces)" OFF)
-option(SIERA_ENABLE_LVGL        "Enable LVGL integration (implies SIERA_ENABLE_UI)"   OFF)
-option(SIERA_DRIVER_SIMULATOR   "Build simulator drivers for host testing"            OFF)
-option(SIERA_ENABLE_COVERAGE    "Enable gcov code coverage instrumentation"           OFF)
-
-# LVGL implies UI
-if(SIERA_ENABLE_LVGL)
-    set(SIERA_ENABLE_UI ON CACHE BOOL "Forced by SIERA_ENABLE_LVGL" FORCE)
+if(CMAKE_BUILD_EARLY_EXPANSION)
+    file(GLOB _drv_requires_files
+        "${CMAKE_CURRENT_LIST_DIR}/src/drivers/*/idf_requires.cmake")
+    set(_idf_requires "")
+    foreach(_f IN LISTS _drv_requires_files)
+        include(${_f})
+        list(APPEND _idf_requires ${SIERA_IDF_REQUIRES})
+        unset(SIERA_IDF_REQUIRES)
+    endforeach()
+    idf_component_register(REQUIRES ${_idf_requires})
+    return()
 endif()
 
 # ──────────────────────────────────────────────────────────────
-# Source & include collection
+# Options (host + ESP-IDF normal build)
 # ──────────────────────────────────────────────────────────────
 
-set(SRC_ROOT "${CMAKE_CURRENT_LIST_DIR}/src")
+option(SIERA_ENABLE_DRIVERS "Build platform drivers"  OFF)
+option(SIERA_BUILD_TESTS    "Build unit tests"         OFF)
+option(SIERA_BUILD_EXAMPLES "Build examples"           OFF)
 
-file(GLOB_RECURSE CORE_SOURCES    "${SRC_ROOT}/core/*.c")
-file(GLOB_RECURSE UI_SOURCES      "${SRC_ROOT}/ui/*.c"   EXCLUDE REGEX ".*/lvgl/.*")
-file(GLOB_RECURSE LVGL_WRAPPER_SOURCES "${SRC_ROOT}/ui/lvgl/*.c" EXCLUDE REGEX ".*/lvgl/lvgl/.*")
-file(GLOB         SIMULATOR_SOURCES "${SRC_ROOT}/driver/simulator/*.c")
+# ──────────────────────────────────────────────────────────────
+# SIERA_PLATFORM — required when SIERA_ENABLE_DRIVERS=ON.
+# On ESP-IDF this is set implicitly; validation is skipped.
+# Valid values: ESP32  POSIX  SIMULATOR  PICO
+# ──────────────────────────────────────────────────────────────
 
-set(SIERA_SOURCES ${CORE_SOURCES})
+set(SIERA_VALID_PLATFORMS ESP32 POSIX SIMULATOR PICO)
+set(SIERA_PLATFORM "" CACHE STRING "Target platform (ESP32 | POSIX | SIMULATOR | PICO)")
+set_property(CACHE SIERA_PLATFORM PROPERTY STRINGS ${SIERA_VALID_PLATFORMS})
 
-set(SIERA_INCLUDE_DIRS
-    ${SRC_ROOT}/core
-    ${SRC_ROOT}/core/data_structures
-    ${SRC_ROOT}/core/datastream
-    ${SRC_ROOT}/core/event
-    ${SRC_ROOT}/core/timer
-    ${SRC_ROOT}/core/state_machine
-)
+if(SIERA_ENABLE_DRIVERS)
+    if(NOT SIERA_PLATFORM)
+        message(FATAL_ERROR
+            "SIERA_PLATFORM must be set when SIERA_ENABLE_DRIVERS=ON.\n"
+            "Pass -DSIERA_PLATFORM=<platform>. Valid: ${SIERA_VALID_PLATFORMS}")
+    endif()
+    if(NOT SIERA_PLATFORM IN_LIST SIERA_VALID_PLATFORMS)
+        message(FATAL_ERROR
+            "SIERA_PLATFORM='${SIERA_PLATFORM}' is not valid.\n"
+            "Valid platforms: ${SIERA_VALID_PLATFORMS}")
+    endif()
+endif()
 
-if(SIERA_ENABLE_UI)
-    list(APPEND SIERA_SOURCES      ${UI_SOURCES})
-    list(APPEND SIERA_INCLUDE_DIRS
-        ${SRC_ROOT}/ui
-        ${SRC_ROOT}/ui/view
-        ${SRC_ROOT}/ui/display
+# ──────────────────────────────────────────────────────────────
+# Host-only setup
+# ──────────────────────────────────────────────────────────────
+
+if(NOT ESP_PLATFORM)
+    project(siera
+        VERSION 0.2.0
+        DESCRIPTION "Simple Interface for Embedded Runtime Applications"
+        LANGUAGES C CXX
     )
-    message(STATUS "SIERA: UI module enabled")
-endif()
 
-if(SIERA_DRIVER_SIMULATOR)
-    list(APPEND SIERA_SOURCES      ${SIMULATOR_SOURCES})
-    list(APPEND SIERA_INCLUDE_DIRS ${SRC_ROOT}/driver/simulator)
-    message(STATUS "SIERA: Simulator drivers enabled")
+    set(CMAKE_C_STANDARD        11)
+    set(CMAKE_C_STANDARD_REQUIRED ON)
+    set(CMAKE_CXX_STANDARD      20)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+    include(SieraTest)
+
+    if(SIERA_BUILD_TESTS)
+        enable_testing()
+        include(FetchContent)
+        FetchContent_Declare(cpputest
+            GIT_REPOSITORY https://github.com/cpputest/cpputest.git
+            GIT_TAG        master)
+        set(TESTS OFF CACHE BOOL "" FORCE)
+        FetchContent_MakeAvailable(cpputest)
+    endif()
 endif()
 
 # ──────────────────────────────────────────────────────────────
-# ESP-IDF component mode
+# siera — INTERFACE library
+#
+# Sources are compiled by the consumer so that consumer-supplied
+# config headers (e.g. siera_ds_conf.h) are on the include path.
+# ──────────────────────────────────────────────────────────────
+
+add_library(siera INTERFACE)
+target_compile_options(siera INTERFACE -Wall -Wextra)
+
+set(SIERA_SRCS "")
+set(SIERA_INCLUDE_DIRS "")
+
+add_subdirectory(src/core/siera_common)
+add_subdirectory(src/core/siera_hal)
+add_subdirectory(src/core/siera_slist)
+add_subdirectory(src/core/siera_event)
+add_subdirectory(src/core/siera_timer)
+add_subdirectory(src/core/siera_fsm)
+add_subdirectory(src/core/siera_ds)
+
+# ──────────────────────────────────────────────────────────────
+# Platform driver
+# ──────────────────────────────────────────────────────────────
+
+if(SIERA_ENABLE_DRIVERS)
+    if(SIERA_PLATFORM STREQUAL "ESP32")
+        add_subdirectory(src/drivers/siera_drv_esp32)
+    elseif(SIERA_PLATFORM STREQUAL "POSIX" OR SIERA_PLATFORM STREQUAL "SIMULATOR")
+        add_subdirectory(src/drivers/posix)
+    endif()
+endif()
+
+# ──────────────────────────────────────────────────────────────
+# ESP-IDF: register all accumulated sources as the siera component
 # ──────────────────────────────────────────────────────────────
 
 if(ESP_PLATFORM)
-    # ESP-IDF names the component after the folder → expected name = siera
-
-    if(SIERA_ENABLE_UI)
-        # We already have UI_SOURCES without lvgl/ subfolder
-        list(APPEND SIERA_SOURCES ${UI_SOURCES})
-
-        list(APPEND SIERA_INCLUDE_DIRS
-            ${SRC_ROOT}/ui
-            ${SRC_ROOT}/ui/view
-            ${SRC_ROOT}/ui/display
-            ${SRC_ROOT}/ui/lvgl
-            ${SRC_ROOT}/ui/lvgl/components
-        )
-    endif()
-
-    # LVGL is expected to come from REQUIRES
     idf_component_register(
-        SRCS            ${SIERA_SOURCES}
-        INCLUDE_DIRS    ${SIERA_INCLUDE_DIRS}
-        REQUIRES        lvgl    # only added when actually used
+        SRCS         ${SIERA_SRCS}
+        INCLUDE_DIRS ${SIERA_INCLUDE_DIRS}
     )
-
-    return()   # ── stop processing here for ESP-IDF ──
+    return()
 endif()
 
 # ──────────────────────────────────────────────────────────────
-# Standalone / Simulator / Desktop build
+# Tests and examples
 # ──────────────────────────────────────────────────────────────
 
-add_library(siera STATIC ${SIERA_SOURCES})
+if(SIERA_BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
 
-target_include_directories(siera
-    PUBLIC  ${SIERA_INCLUDE_DIRS}
-    PRIVATE ${CMAKE_CURRENT_BINARY_DIR}   # useful for generated files if any
-)
-
-target_compile_options(siera PRIVATE
-    -Wall
-    -Wextra
-    # -Wpedantic   # consider adding later, many embedded projects disable it
-)
-
-# ──────────────────────────────────────────────────────────────
-# LVGL integration (standalone only)
-# ──────────────────────────────────────────────────────────────
-
-if(SIERA_ENABLE_LVGL)
-    # LVGL configuration before adding subdirectory
-    set(CONFIG_LV_BUILD_DEMOS       OFF CACHE BOOL "" FORCE)
-    set(CONFIG_LV_BUILD_EXAMPLES    OFF CACHE BOOL "" FORCE)
-    set(CONFIG_LV_USE_THORVG_INTERNAL OFF CACHE BOOL "" FORCE)
-
-    add_subdirectory(${SRC_ROOT}/ui/lvgl/lvgl)
-
-    list(APPEND SIERA_SOURCES ${LVGL_WRAPPER_SOURCES})
-    target_sources(siera PRIVATE ${LVGL_WRAPPER_SOURCES})
-
-    target_include_directories(siera PUBLIC
-        ${SRC_ROOT}/ui/lvgl
-        ${SRC_ROOT}/ui/lvgl/components
-    )
-
-    target_link_libraries(siera PUBLIC lvgl)
-
-    message(STATUS "SIERA: LVGL integration enabled")
+if(SIERA_BUILD_EXAMPLES)
+    add_subdirectory(examples/hello_siera)
 endif()

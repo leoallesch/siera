@@ -1,3 +1,7 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 # SIERA - Claude Code Context
 
 ## Project Overview
@@ -233,7 +237,9 @@ TEST(TimerTests, fires_after_interval) {
 
 - Use `mock().expectOneCall(...)` / `mock().checkExpectations()` for callback verification
 - Use `double_timesource_set_ticks()` to advance time deterministically
-- Run: `make tests` or `ctest --test-dir build`
+- Run all tests: `make tests` or `ctest --test-dir build`
+- Run a single test group or test: `./build/tests/test_core -g TimerTests` or `./build/tests/test_core -t fires_after_interval`
+- List all tests: `./build/tests/test_core -l`
 
 ### Code Coverage
 `make coverage` — builds Debug+gcov, runs tests, filters deps, enforces 80% line coverage gate. lcov on GCC 15 requires `--ignore-errors inconsistent,inconsistent` (already in Makefile).
