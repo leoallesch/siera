@@ -14,6 +14,11 @@ include(SieraModule)
 # When siera is used as a subdirectory the top-level CMakeLists.txt must run
 # the bootstrap and call project() before add_subdirectory(siera).
 
+if(ESP_PLATFORM AND NOT DEFINED SIERA_PLATFORM)
+    set(SIERA_PLATFORM esp32)
+endif()
+
+
 if(DEFINED SIERA_PLATFORM)
     string(TOLOWER "${SIERA_PLATFORM}" _platform)
 endif()

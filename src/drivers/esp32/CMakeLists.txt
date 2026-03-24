@@ -15,7 +15,9 @@ target_include_directories(siera_drv_esp32 PUBLIC
 
 target_link_libraries(siera_drv_esp32 PUBLIC
     siera
-    idf::driver
+    idf::esp_driver_gpio
+    idf::esp_driver_uart
+    idf::esp_driver_ledc
     idf::esp_timer
     idf::esp_adc
 )
