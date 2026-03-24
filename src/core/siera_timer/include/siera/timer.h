@@ -20,10 +20,10 @@ typedef struct {
 
 typedef struct {
   siera_slist_head_t timers;
-  siera_timesource_t* timesource;
+  siera_hal_timesource_t* timesource;
 } siera_timer_mgr_t;
 
-void siera_timer_mgr_init(siera_timer_mgr_t* mgr, siera_timesource_t* timesource);
+void siera_timer_mgr_init(siera_timer_mgr_t* mgr, siera_hal_timesource_t* timesource);
 int  siera_timer_start(siera_timer_mgr_t* mgr, siera_timer_t* t, siera_timer_cb_fn cb, void* ctx, uint32_t interval_ms, bool repeat);
 int  siera_timer_stop(siera_timer_mgr_t* mgr, siera_timer_t* t);
 int  siera_timer_restart(siera_timer_mgr_t* mgr, siera_timer_t* t);

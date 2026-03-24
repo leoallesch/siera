@@ -3,11 +3,11 @@
 
 #include <stdint.h>
 
-typedef struct siera_timesource_t {
-    uint32_t (*get_ticks)(struct siera_timesource_t *self);
-} siera_timesource_t;
+typedef struct siera_hal_timesource_t {
+    uint32_t (*get_ticks)(struct siera_hal_timesource_t *self);
+} siera_hal_timesource_t;
 
-static inline uint32_t siera_timesource_get_ticks(siera_timesource_t *self)
+static inline uint32_t siera_hal_timesource_get_ticks(siera_hal_timesource_t *self)
 {
     return self->get_ticks(self);
 }

@@ -6,8 +6,8 @@ extern "C" {
 // Fake timesource using siera_timesource_t interface
 static uint32_t s_now = 0;
 
-static uint32_t fake_get_ticks(siera_timesource_t *) { return s_now; }
-static siera_timesource_t fake_timesource = { fake_get_ticks };
+static uint32_t fake_get_ticks(siera_hal_timesource_t *) { return s_now; }
+static siera_hal_timesource_t fake_timesource = { fake_get_ticks };
 
 static int s_fires = 0;
 static void counter(void *) { s_fires++; }
