@@ -5,5 +5,5 @@ set(_elf ${CMAKE_PROJECT_NAME}.elf)
 target_sources(${_elf} PRIVATE main.c)
 target_link_libraries(${_elf} PRIVATE
     multi_target::app
-    siera::esp32
+    siera
 )

@@ -27,7 +27,7 @@ typedef struct siera_ds_cache_t {
 
 #define _DS_EXPAND_DEFAULT(name, type, st, dv, fl)                           \
   {                                                                           \
-    type _tmp = (dv);                                                         \
+    type _tmp = (type){dv};                                                   \
     memcpy((uint8_t*)cache + SIERA_OFFSET_OF(siera_ds_cache_t, name),        \
            &_tmp, sizeof(type));                                              \
   }

@@ -23,7 +23,7 @@
  *   c_type        C type stored in the cache (uint8_t, bool, float, …).
  *   stream_type   Where the value lives:
  *                   SIERA_DS_RAM     — volatile, in-memory only
- *                   SIERA_DS_PERSIST — non-volatile, read/written via persist stream
+ *                   SIERA_DS_NVS — non-volatile, read/written via persist stream
  *                   SIERA_DS_GPIO    — backed by a GPIO stream
  *                   SIERA_DS_ADC     — backed by an ADC stream (read-only typical)
  *                   SIERA_DS_PWM     — backed by a PWM stream

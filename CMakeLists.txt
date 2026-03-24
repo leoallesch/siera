@@ -5,7 +5,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 include(SieraModule)
 
 # ── Platform bootstrap (before project()) ─────────────────────────────────────
-# Pass -DSIERA_PLATFORM=posix or -DSIERA_PLATFORM=esp32 at configure time.
+# Pass -DSIERA_PLATFORM=posix (simulator) or -DSIERA_PLATFORM=esp32 at configure time.
 # Omit when building SIERA as a pure library (tests only).
 #
 # Each cmake/platforms/*/<name>.cmake appends its name to SIERA_PLATFORMS and
@@ -20,17 +20,14 @@ endif()
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     if(DEFINED SIERA_PLATFORM)
-        file(GLOB _platform_files
-            "${CMAKE_CURRENT_LIST_DIR}/cmake/platforms/*/*.cmake")
-        foreach(_f IN LISTS _platform_files)
+        set(_platform_dir "${CMAKE_CURRENT_LIST_DIR}/cmake/platforms/${_platform}")
+        if(NOT IS_DIRECTORY "${_platform_dir}")
+            message(FATAL_ERROR "SIERA: unknown platform '${SIERA_PLATFORM}' (no ${_platform_dir})")
+        endif()
+        file(GLOB _platform_cmake "${_platform_dir}/*.cmake")
+        foreach(_f IN LISTS _platform_cmake)
             include("${_f}")
         endforeach()
-
-        if(NOT "${_platform}" IN_LIST SIERA_PLATFORMS)
-            message(FATAL_ERROR
-                "SIERA: unknown platform '${SIERA_PLATFORM}'.\n"
-                "Available: ${SIERA_PLATFORMS}")
-        endif()
     endif()
 
     project(siera
@@ -48,7 +45,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # ── Options ───────────────────────────────────────────────────────────────────
 
-option(SIERA_BUILD_TESTS "Build unit tests" OFF)
+option(SIERA_BUILD_TESTS    "Build unit tests"               OFF)
+option(SIERA_ENABLE_DRIVERS "Link platform driver into siera" OFF)
+option(SIERA_ENABLE_UI      "Build view/display UI module"    OFF)
 
 include(SieraTest)
 
@@ -70,12 +69,19 @@ add_subdirectory(src/core/siera_event)
 add_subdirectory(src/core/siera_timer)
 add_subdirectory(src/core/siera_fsm)
 add_subdirectory(src/core/siera_ds)
-add_subdirectory(src/core/siera_view)
+add_subdirectory(src/core/siera_key_manager)
+
+if(SIERA_ENABLE_UI)
+    add_subdirectory(src/ui/siera_view)
+endif()
 
 # ── Platform driver (auto-selected) ──────────────────────────────────────────
+# When both SIERA_ENABLE_DRIVERS and SIERA_PLATFORM are set the driver sources
+# are compiled and linked into the siera INTERFACE target so consumers only
+# need to link against siera.
 
-if(DEFINED SIERA_PLATFORM)
-    add_subdirectory(src/drivers/${_platform})
+if(SIERA_ENABLE_DRIVERS AND DEFINED SIERA_PLATFORM_DRIVER_DIR)
+    add_subdirectory(src/drivers/${SIERA_PLATFORM_DRIVER_DIR})
 endif()
 
 # ── Tests ─────────────────────────────────────────────────────────────────────

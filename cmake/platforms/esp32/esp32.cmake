@@ -1,6 +1,7 @@
 list(APPEND SIERA_PLATFORMS "esp32")
 
 if(SIERA_PLATFORM STREQUAL "esp32")
+    set(SIERA_PLATFORM_DRIVER_DIR "esp32")
     message(STATUS "SIERA: building for esp32 (ESP-IDF bootstrap)")
 
     if(NOT DEFINED ENV{IDF_PATH})

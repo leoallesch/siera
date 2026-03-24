@@ -1,1 +1,1 @@
-siera_add_module(NAME siera_slist)
+siera_add_module()

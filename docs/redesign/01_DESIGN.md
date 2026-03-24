@@ -276,7 +276,7 @@ typedef struct {
 
 typedef enum {
     SIERA_DS_RAM,
-    SIERA_DS_PERSIST,
+    SIERA_DS_NVS,
     SIERA_DS_GPIO,
     SIERA_DS_ADC,
     SIERA_DS_PWM,
@@ -297,10 +297,10 @@ SIERA_DS_KEY(SYSTEM_STATE,   uint8_t,    SIERA_DS_RAM,     0,     SIERA_DS_NONE)
 SIERA_DS_KEY(UPTIME_SEC,     uint32_t,   SIERA_DS_RAM,     0,     SIERA_DS_NONE)
 SIERA_DS_KEY(ALARM_FIRING,   bool,       SIERA_DS_RAM,     false, SIERA_DS_NONE)
 
-SIERA_DS_KEY(ALARM_HOUR,     uint8_t,    SIERA_DS_PERSIST, 7,     SIERA_DS_NONE)
-SIERA_DS_KEY(ALARM_MIN,      uint8_t,    SIERA_DS_PERSIST, 0,     SIERA_DS_NONE)
-SIERA_DS_KEY(ALARM_ENABLED,  bool,       SIERA_DS_PERSIST, false, SIERA_DS_NONE)
-SIERA_DS_KEY(BRIGHTNESS,     uint8_t,    SIERA_DS_PERSIST, 128,   SIERA_DS_NONE)
+SIERA_DS_KEY(ALARM_HOUR,     uint8_t,    SIERA_DS_NVS, 7,     SIERA_DS_NONE)
+SIERA_DS_KEY(ALARM_MIN,      uint8_t,    SIERA_DS_NVS, 0,     SIERA_DS_NONE)
+SIERA_DS_KEY(ALARM_ENABLED,  bool,       SIERA_DS_NVS, false, SIERA_DS_NONE)
+SIERA_DS_KEY(BRIGHTNESS,     uint8_t,    SIERA_DS_NVS, 128,   SIERA_DS_NONE)
 
 SIERA_DS_KEY(LED_STATUS,     bool,       SIERA_DS_GPIO,    false, SIERA_DS_NONE)
 SIERA_DS_KEY(BUTTON_SET,     bool,       SIERA_DS_GPIO,    false, SIERA_DS_READONLY)
@@ -473,7 +473,7 @@ static inline siera_ds_stream_t *ds_stream(const siera_ds_t *ds,
 }
 
 static int ds_flush(siera_ds_t *ds) {
-    siera_ds_stream_t *s = ds_stream(ds, SIERA_DS_PERSIST);
+    siera_ds_stream_t *s = ds_stream(ds, SIERA_DS_NVS);
     if (!s || !s->api->write) return 0;
     int flushed = 0;
     for (int i = 0; i < SIERA_DS_KEY_COUNT; i++) {
@@ -533,7 +533,7 @@ int siera_ds_read(const siera_ds_t *ds, siera_ds_key_t key, void *out) {
     if (key >= SIERA_DS_KEY_COUNT) return -1;
     const siera_ds_entry_t *e = &ds->entries[key];
 
-    if (e->stream_type != SIERA_DS_RAM && e->stream_type != SIERA_DS_PERSIST) {
+    if (e->stream_type != SIERA_DS_RAM && e->stream_type != SIERA_DS_NVS) {
         siera_ds_stream_t *s = ds_stream(ds, e->stream_type);
         if (s && s->api->read)
             s->api->read(s->ctx, key,
@@ -557,11 +557,11 @@ int siera_ds_write(siera_ds_t *ds, siera_ds_key_t key, const void *in) {
     memcpy(old, cached, e->size);
     memcpy(cached, in, e->size);
 
-    if (e->stream_type == SIERA_DS_PERSIST) {
+    if (e->stream_type == SIERA_DS_NVS) {
         if (ds->flush_interval_ms > 0) {
             ds->dirty[key / 32] |= (1u << (key % 32));
         } else {
-            siera_ds_stream_t *s = ds_stream(ds, SIERA_DS_PERSIST);
+            siera_ds_stream_t *s = ds_stream(ds, SIERA_DS_NVS);
             if (s && s->api->write)
                 s->api->write(s->ctx, key, in, e->size);
         }

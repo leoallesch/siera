@@ -1,5 +1,5 @@
 add_executable(multi_target main.c)
-target_link_libraries(multi_target PRIVATE multi_target::app siera::posix)
+target_link_libraries(multi_target PRIVATE multi_target::app siera)
 target_include_directories(multi_target PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_compile_options(multi_target PRIVATE -Wall -Wextra -g)

@@ -32,7 +32,7 @@ static inline siera_ds_stream_t* ds_stream(const siera_ds_t* ds,
 static void ds_flush(void* ctx)
 {
   siera_ds_t* ds = (siera_ds_t*)ctx;
-  siera_ds_stream_t* s = ds_stream(ds, SIERA_DS_PERSIST);
+  siera_ds_stream_t* s = ds_stream(ds, SIERA_DS_NVS);
   if(!s || !s->api->write)
     return;
   for(int i = 0; i < SIERA_DS_KEY_COUNT; i++) {
@@ -114,7 +114,7 @@ int siera_ds_write(siera_ds_t* ds, siera_ds_key_t key, const void* in)
 
   memcpy(cached, in, e->size);
 
-  if(e->stream_type == SIERA_DS_PERSIST && ds->flush_interval_ms > 0) {
+  if(e->stream_type == SIERA_DS_NVS && ds->flush_interval_ms > 0) {
     ds->dirty[key / 32] |= (1u << ((uint32_t)key % 32u));
   }
   else if(e->stream_type != SIERA_DS_RAM) {

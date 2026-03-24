@@ -1,4 +1,4 @@
-#include "siera/posix_sim.h"
+#include "siera/sim.h"
 
 #define GRID_COLUMNS 4
 
@@ -13,14 +13,14 @@
 
 static void on_button_event(lv_event_t* e)
 {
-  siera_posix_sim_input_ctx_t* ctx = lv_event_get_user_data(e);
+  siera_sim_input_ctx_t* ctx = lv_event_get_user_data(e);
   bool pressed = (lv_event_get_code(e) == LV_EVENT_PRESSED);
   siera_ds_write(ctx->ds, ctx->key, &pressed);
 }
 
 static void on_switch_event(lv_event_t* e)
 {
-  siera_posix_sim_input_ctx_t* ctx = lv_event_get_user_data(e);
+  siera_sim_input_ctx_t* ctx = lv_event_get_user_data(e);
   lv_obj_t* sw = lv_event_get_target(e);
   bool checked = lv_obj_has_state(sw, LV_STATE_CHECKED);
   siera_ds_write(ctx->ds, ctx->key, &checked);
@@ -28,7 +28,7 @@ static void on_switch_event(lv_event_t* e)
 
 static void on_slider_event(lv_event_t* e)
 {
-  siera_posix_sim_input_ctx_t* ctx = lv_event_get_user_data(e);
+  siera_sim_input_ctx_t* ctx = lv_event_get_user_data(e);
   lv_obj_t* slider = lv_event_get_target(e);
   int32_t val = lv_slider_get_value(slider);
   uint16_t value = (uint16_t)val;
@@ -37,10 +37,12 @@ static void on_slider_event(lv_event_t* e)
 
 static lv_obj_t* create_input_widget(
   lv_obj_t* parent,
-  const siera_posix_sim_input_t* cfg,
+  const siera_sim_input_t* cfg,
   void* ctx)
 {
   lv_obj_t* cell = lv_obj_create(parent);
+  lv_obj_set_scrollbar_mode(cell, LV_SCROLLBAR_MODE_OFF);
+  lv_obj_set_scroll_dir(cell, LV_DIR_NONE);
   lv_obj_set_flex_flow(cell, LV_FLEX_FLOW_COLUMN);
   lv_obj_set_flex_align(
     cell, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
@@ -107,11 +109,13 @@ static lv_obj_t* create_input_widget(
 
 static lv_obj_t* create_input_panel(
   lv_obj_t* parent,
-  const siera_posix_sim_input_t* inputs,
+  const siera_sim_input_t* inputs,
   uint8_t input_count,
-  siera_posix_sim_t* self)
+  siera_sim_t* self)
 {
   lv_obj_t* panel = lv_obj_create(parent);
+  lv_obj_set_scrollbar_mode(panel, LV_SCROLLBAR_MODE_OFF);
+  lv_obj_set_scroll_dir(panel, LV_DIR_NONE);
   lv_obj_set_size(panel, lv_pct(100), LV_SIZE_CONTENT);
   lv_obj_set_flex_flow(panel, LV_FLEX_FLOW_ROW_WRAP);
   lv_obj_set_flex_align(
@@ -132,6 +136,8 @@ static lv_obj_t* create_input_panel(
 static lv_obj_t* create_content_area(lv_obj_t* parent, int width, int height)
 {
   lv_obj_t* border = lv_obj_create(parent);
+  lv_obj_set_scrollbar_mode(border, LV_SCROLLBAR_MODE_OFF);
+  lv_obj_set_scroll_dir(border, LV_DIR_NONE);
   lv_obj_set_size(border, width + 4, height + 4);
   lv_obj_set_style_bg_color(border, lv_color_hex(0x0a0a12), 0);
   lv_obj_set_style_bg_opa(border, LV_OPA_COVER, 0);
@@ -143,6 +149,8 @@ static lv_obj_t* create_content_area(lv_obj_t* parent, int width, int height)
   lv_obj_t* content = lv_obj_create(border);
   lv_obj_remove_style_all(content);
   lv_obj_set_size(content, width, height);
+  lv_obj_set_scrollbar_mode(content, LV_SCROLLBAR_MODE_OFF);
+  lv_obj_set_scroll_dir(content, LV_DIR_NONE);
 
   return content;
 }
@@ -150,18 +158,22 @@ static lv_obj_t* create_content_area(lv_obj_t* parent, int width, int height)
 static lv_obj_t* create_screen(
   int app_width,
   int app_height,
-  const siera_posix_sim_input_t* inputs,
+  const siera_sim_input_t* inputs,
   uint8_t input_count,
-  siera_posix_sim_t* self,
+  siera_sim_t* self,
   lv_obj_t** out_content_area,
   lv_obj_t** out_input_panel)
 {
   lv_obj_t* screen = lv_obj_create(NULL);
   lv_obj_set_style_bg_color(screen, lv_color_hex(COLOR_BG), 0);
   lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, 0);
+  lv_obj_set_scrollbar_mode(screen, LV_SCROLLBAR_MODE_OFF);
+  lv_obj_set_scroll_dir(screen, LV_DIR_NONE);
 
   lv_obj_t* main_col = lv_obj_create(screen);
   lv_obj_remove_style_all(main_col);
+  lv_obj_set_scrollbar_mode(main_col, LV_SCROLLBAR_MODE_OFF);
+  lv_obj_set_scroll_dir(main_col, LV_DIR_NONE);
   lv_obj_set_size(main_col, lv_pct(100), lv_pct(100));
   lv_obj_set_flex_flow(main_col, LV_FLEX_FLOW_COLUMN);
   lv_obj_set_flex_align(
@@ -175,10 +187,10 @@ static lv_obj_t* create_screen(
   return screen;
 }
 
-void siera_posix_sim_init(
-  siera_posix_sim_t*              self,
-  const siera_posix_sim_config_t* cfg,
-  siera_ds_t*                     ds)
+void siera_sim_init(
+  siera_sim_t*              self,
+  const siera_sim_config_t* cfg,
+  siera_ds_t*               ds)
 {
   self->ds = ds;
 
@@ -211,10 +223,10 @@ void siera_posix_sim_init(
 
   lv_screen_load(screen);
 
-  siera_posix_display_init(&self->posix_display, self->content_area);
+  siera_sim_display_init(&self->sim_display, self->content_area);
 }
 
-siera_hal_display_t* siera_posix_sim_get_display(siera_posix_sim_t* self)
+siera_hal_display_t* siera_sim_get_display(siera_sim_t* self)
 {
-  return &self->posix_display.interface;
+  return &self->sim_display.interface;
 }

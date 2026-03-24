@@ -4,6 +4,7 @@
 #include "siera/common.h"
 #include "siera/event.h"
 #include "siera/fsm.h"
+#include "siera/key_manager.h"
 #include "siera/view_mgr.h"
 
 #include <stddef.h>
@@ -11,13 +12,15 @@
 /* ── Presenter ───────────────────────────────────────────────────────────── */
 
 typedef struct {
-  siera_fsm_t fsm;
-  siera_view_mgr_t view_mgr;
-  siera_ds_t* ds;
-  siera_timer_mgr_t* timers;
-  siera_timer_t tick_timer;
-  counter_view_t counter_view;
-  siera_event_sub_t ds_sub;
+  siera_fsm_t          fsm;
+  siera_view_mgr_t     view_mgr;
+  siera_ds_t*          ds;
+  siera_timer_mgr_t*   timers;
+  siera_timer_t        tick_timer;
+  counter_view_t       counter_view;
+  siera_event_sub_t    ds_sub;
+  siera_key_manager_t  key_mgr;
+  bool                 paused;
 } app_presenter_t;
 
 static app_presenter_t g_presenter;
@@ -33,19 +36,6 @@ static app_presenter_t* p_from_fsm(siera_fsm_t* fsm)
 
 static void state_counting(siera_fsm_t* fsm, siera_fsm_signal_t signal, const void* data);
 
-/* ── DS change handler ───────────────────────────────────────────────────── */
-
-static void on_ds_change(const void* args, void* ctx)
-{
-  app_presenter_t* p = (app_presenter_t*)ctx;
-  const siera_ds_on_change_t* change = (const siera_ds_on_change_t*)args;
-
-  if(change->key == SIERA_DS_KEY_COUNTER) {
-    uint32_t value = *(const uint32_t*)change->data;
-    counter_view_update(&p->counter_view, value);
-  }
-}
-
 /* ── Timer callback ──────────────────────────────────────────────────────── */
 
 static void on_tick(void* ctx)
@@ -57,6 +47,35 @@ static void on_tick(void* ctx)
   siera_ds_write(p->ds, SIERA_DS_KEY_COUNTER, &counter);
 }
 
+/* ── DS change handler ───────────────────────────────────────────────────── */
+
+static void on_ds_change(const void* args, void* ctx)
+{
+  app_presenter_t* p = (app_presenter_t*)ctx;
+  const siera_ds_on_change_t* change = (const siera_ds_on_change_t*)args;
+
+  if(change->key == SIERA_DS_KEY_COUNTER) {
+    counter_view_update(&p->counter_view, *(const uint32_t*)change->data);
+  }
+  else if(change->key == SIERA_DS_KEY_KEY_EVENT) {
+    const siera_key_event_data_t* ke = (const siera_key_event_data_t*)change->data;
+    if(ke->event != SIERA_KEY_EVENT_PRESSANDRELEASE)
+      return;
+
+    if(ke->key == SIERA_DS_KEY_BTN_PAUSE) {
+      p->paused = !p->paused;
+      if(p->paused)
+        siera_timer_stop(p->timers, &p->tick_timer);
+      else
+        siera_timer_start(p->timers, &p->tick_timer, on_tick, p, 500, true);
+    }
+    else if(ke->key == SIERA_DS_KEY_BTN_RESET) {
+      uint32_t zero = 0;
+      siera_ds_write(p->ds, SIERA_DS_KEY_COUNTER, &zero);
+    }
+  }
+}
+
 /* ── FSM state ───────────────────────────────────────────────────────────── */
 
 static void state_counting(siera_fsm_t* fsm, siera_fsm_signal_t signal, const void* data)
@@ -64,9 +83,18 @@ static void state_counting(siera_fsm_t* fsm, siera_fsm_signal_t signal, const vo
   (void)data;
   app_presenter_t* p = p_from_fsm(fsm);
 
+  static const siera_ds_key_t btn_keys[] = {
+    SIERA_DS_KEY_BTN_PAUSE,
+    SIERA_DS_KEY_BTN_RESET,
+  };
+
   switch(signal) {
     case SIERA_FSM_SIGNAL_ENTER:
       siera_view_mgr_set(&p->view_mgr, &p->counter_view.base);
+      siera_key_manager_init(
+        &p->key_mgr, p->ds, p->timers,
+        SIERA_DS_KEY_KEY_EVENT, 500,
+        btn_keys, SIERA_NUM_ELEMENTS(btn_keys));
       siera_event_sub_init(&p->ds_sub, on_ds_change, p);
       siera_ds_subscribe_all(p->ds, &p->ds_sub);
       siera_timer_start(p->timers, &p->tick_timer, on_tick, p, 500, true);
@@ -87,8 +115,9 @@ static void state_counting(siera_fsm_t* fsm, siera_fsm_signal_t signal, const vo
 
 void app_init(siera_ds_t* ds, siera_timer_mgr_t* timers, siera_hal_display_t* display)
 {
-  g_presenter.ds = ds;
+  g_presenter.ds     = ds;
   g_presenter.timers = timers;
+  g_presenter.paused = false;
 
   counter_view_init(&g_presenter.counter_view);
   siera_view_mgr_init(&g_presenter.view_mgr, display);

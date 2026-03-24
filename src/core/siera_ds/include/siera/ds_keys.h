@@ -1,6 +1,8 @@
 #ifndef SIERA_DS_KEYS_H
 #define SIERA_DS_KEYS_H
 
+#include <stdint.h>
+
 /*
  * siera_ds_key_t is generated from the user-supplied SIERA_DS_KEYS(KEY) macro
  * table defined in siera_ds_conf.h.
@@ -25,11 +27,13 @@
     KEY(_DUMMY, uint8_t, SIERA_DS_RAM, 0, SIERA_DS_NONE)
 #endif
 
-typedef enum {
+typedef uint16_t siera_ds_key_t;
+
+enum {
 #define _DS_KEY_ENUM(name, type, st, dv, fl) SIERA_DS_KEY_##name,
     SIERA_DS_KEYS(_DS_KEY_ENUM)
 #undef _DS_KEY_ENUM
     SIERA_DS_KEY_COUNT
-} siera_ds_key_t;
+};
 
 #endif

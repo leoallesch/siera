@@ -25,6 +25,8 @@ set(LV_BUILD_CONF_PATH "${CMAKE_SOURCE_DIR}/platform/${_platform}/lv_conf_simula
     FetchContent_MakeAvailable(lvgl)
 
 
+set(SIERA_ENABLE_DRIVERS ON CACHE BOOL "" FORCE)
+set(SIERA_ENABLE_UI ON CACHE BOOL "" FORCE)
 add_subdirectory(${_siera_root} ${CMAKE_BINARY_DIR}/siera)
 
 add_subdirectory(app)

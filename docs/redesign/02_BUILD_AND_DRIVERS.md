@@ -409,7 +409,7 @@ protected:
     siera_ds_stream_t gpio_s    = { &mock_gpio_api, nullptr };
     siera_ds_stream_t adc_s     = { &mock_adc_api, nullptr };
     siera_ds_stream_binding_t streams[4] = {
-        { SIERA_DS_PERSIST, &persist_s }, { SIERA_DS_GPIO, &gpio_s },
+        { SIERA_DS_NVS, &persist_s }, { SIERA_DS_GPIO, &gpio_s },
         { SIERA_DS_ADC, &adc_s }, SIERA_DS_STREAM_END };
     siera_ds_config_t config = { streams, &events, &timers, 0 };
 

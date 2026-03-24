@@ -1,5 +1,4 @@
 # siera_add_module(
-#   NAME     <module_name>
 #   SRCS     [src1.c ...]    # optional — omit for header-only modules
 #   INCLUDES [dir1 ...]      # relative to caller dir; defaults to "include"
 #   LINKS    [lib ...]       # extra link dependencies (e.g. idf::driver)
@@ -8,11 +7,7 @@
 # Appends sources/includes/links to the siera INTERFACE target.
 
 macro(siera_add_module)
-    cmake_parse_arguments(_MOD "" "NAME" "SRCS;INCLUDES;LINKS" ${ARGN})
-
-    if(NOT _MOD_NAME)
-        message(FATAL_ERROR "siera_add_module: NAME is required")
-    endif()
+    cmake_parse_arguments(_MOD "" "" "SRCS;INCLUDES;LINKS" ${ARGN})
 
     if(NOT _MOD_INCLUDES)
         set(_MOD_INCLUDES include)

@@ -9,7 +9,7 @@
 
 void app_main(void)
 {
-  siera_timesource_t* timesource = siera_esp32_timesource_init();
+  siera_hal_timesource_t* timesource = siera_esp32_timesource_init();
 
   static siera_timer_mgr_t timers;
   siera_timer_mgr_init(&timers, timesource);

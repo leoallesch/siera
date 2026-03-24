@@ -19,7 +19,7 @@ typedef struct {
 
 typedef enum {
     SIERA_DS_RAM,
-    SIERA_DS_PERSIST,
+    SIERA_DS_NVS,
     SIERA_DS_HARDWARE_START, /* sentinel: all types >= this are hardware streams */
     SIERA_DS_GPIO = SIERA_DS_HARDWARE_START,
     SIERA_DS_ADC,

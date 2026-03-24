@@ -111,7 +111,7 @@ static siera_ds_stream_t adc_stream = { &adc_api, &adc_ctx };
 // ═════════════════════════════════════════════════════════════
 
 static const siera_ds_stream_binding_t streams[] = {
-    { SIERA_DS_PERSIST, &eeprom_stream },
+    { SIERA_DS_NVS, &eeprom_stream },
     { SIERA_DS_GPIO,    &gpio_stream   },
     { SIERA_DS_ADC,     &adc_stream    },
     SIERA_DS_STREAM_END

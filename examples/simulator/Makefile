@@ -1,7 +1,7 @@
 SIERA_ROOT ?= ../..
 BUILD_DIR  ?= build
 
-# --- posix target ---
+# --- simulator (posix host) target ---
 POSIX_PLATFORM    := posix
 POSIX_EXECUTABLE  := platform/posix/multi_target
 

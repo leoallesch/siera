@@ -8,5 +8,8 @@
 
 if(DEFINED SIERA_PLATFORM)
     string(TOLOWER "${SIERA_PLATFORM}" _platform)
-    include(${CMAKE_CURRENT_LIST_DIR}/platforms/${_platform}/${_platform}.cmake)
+    file(GLOB _siera_platform_cmake "${CMAKE_CURRENT_LIST_DIR}/platforms/${_platform}/*.cmake")
+    foreach(_f IN LISTS _siera_platform_cmake)
+        include("${_f}")
+    endforeach()
 endif()

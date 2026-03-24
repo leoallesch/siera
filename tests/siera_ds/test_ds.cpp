@@ -94,7 +94,7 @@ TEST_GROUP(SieraDs)
   siera_ds_stream_t adc_s = { &mock_adc_api, nullptr };
 
   siera_ds_stream_binding_t streams[3] = {
-    { SIERA_DS_PERSIST, &persist_s },
+    { SIERA_DS_NVS, &persist_s },
     { SIERA_DS_GPIO, &gpio_s },
     { SIERA_DS_ADC, &adc_s },
   };

@@ -1,3 +1,1 @@
-siera_add_module(
-    NAME siera_fsm
-    SRCS src/fsm.c)
+siera_add_module(SRCS src/fsm.c)

@@ -6,6 +6,7 @@ include(${_siera_root}/cmake/SieraPlatform.cmake)
 
 project(multi_target C CXX)
 
+set(SIERA_ENABLE_DRIVERS ON CACHE BOOL "" FORCE)
 add_subdirectory(${_siera_root} ${CMAKE_BINARY_DIR}/siera)
 
 add_subdirectory(app)
