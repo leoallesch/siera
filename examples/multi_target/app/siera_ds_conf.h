@@ -1,0 +1,2 @@
+#define SIERA_DS_KEYS(KEY) \
+    KEY(COUNTER, uint32_t, SIERA_DS_RAM, 0, SIERA_DS_NONE)

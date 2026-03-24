@@ -2,14 +2,10 @@
 #   NAME     <module_name>
 #   SRCS     [src1.c ...]    # optional — omit for header-only modules
 #   INCLUDES [dir1 ...]      # relative to caller dir; defaults to "include"
-#   LINKS    [lib ...]       # host only — extra link dependencies
+#   LINKS    [lib ...]       # extra link dependencies (e.g. idf::driver)
 # )
 #
-# On host:     appends sources/includes to the siera INTERFACE target.
-# On ESP-IDF:  appends to SIERA_SRCS / SIERA_INCLUDE_DIRS for the single
-#              idf_component_register in the root CMakeLists.txt.
-#              IDF component dependencies are declared via idf_requires.cmake
-#              in each driver directory, not through this macro.
+# Appends sources/includes/links to the siera INTERFACE target.
 
 macro(siera_add_module)
     cmake_parse_arguments(_MOD "" "NAME" "SRCS;INCLUDES;LINKS" ${ARGN})
@@ -32,24 +28,17 @@ macro(siera_add_module)
         list(APPEND _abs_includes ${CMAKE_CURRENT_SOURCE_DIR}/${_dir})
     endforeach()
 
-    if(ESP_PLATFORM)
-        list(APPEND SIERA_SRCS         ${_abs_srcs})
-        list(APPEND SIERA_INCLUDE_DIRS ${_abs_includes})
-        set(SIERA_SRCS         ${SIERA_SRCS}         PARENT_SCOPE)
-        set(SIERA_INCLUDE_DIRS ${SIERA_INCLUDE_DIRS} PARENT_SCOPE)
-    else()
-        if(_abs_srcs)
-            target_sources(siera INTERFACE ${_abs_srcs})
-        endif()
+    if(_abs_srcs)
+        target_sources(siera INTERFACE ${_abs_srcs})
+    endif()
 
-        foreach(_idir IN LISTS _abs_includes)
-            target_include_directories(siera INTERFACE
-                $<BUILD_INTERFACE:${_idir}>
-                $<INSTALL_INTERFACE:include>)
-        endforeach()
+    foreach(_idir IN LISTS _abs_includes)
+        target_include_directories(siera INTERFACE
+            $<BUILD_INTERFACE:${_idir}>
+            $<INSTALL_INTERFACE:include>)
+    endforeach()
 
-        if(_MOD_LINKS)
-            target_link_libraries(siera INTERFACE ${_MOD_LINKS})
-        endif()
+    if(_MOD_LINKS)
+        target_link_libraries(siera INTERFACE ${_MOD_LINKS})
     endif()
 endmacro()
