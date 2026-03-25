@@ -11,6 +11,7 @@ if(TARGET lvgl)
 
     target_sources(siera INTERFACE
         ${CMAKE_CURRENT_SOURCE_DIR}/sim.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/sim_ui.c
         ${CMAKE_CURRENT_SOURCE_DIR}/sim_display.c
     )
     target_link_libraries(siera INTERFACE lvgl ${SDL2_LIBRARIES})
