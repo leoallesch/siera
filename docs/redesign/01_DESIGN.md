@@ -330,20 +330,20 @@ typedef enum {
     SIERA_DS_SILENT   = (1 << 1),
 } siera_ds_flags_t;
 
-#define SIERA_DS_KEY_EXPAND_ENUM(name, type, st, dv, fl) SIERA_DS_KEY_##name,
+#define DSK_EXPAND_ENUM(name, type, st, dv, fl) DSK_##name,
 
 typedef enum {
-    #define SIERA_DS_KEY(...) SIERA_DS_KEY_EXPAND_ENUM(__VA_ARGS__)
+    #define SIERA_DS_KEY(...) DSK_EXPAND_ENUM(__VA_ARGS__)
     #include "siera_ds_keys.def"
     #undef SIERA_DS_KEY
-    SIERA_DS_KEY_COUNT
+    DSK_COUNT
 } siera_ds_key_t;
 
-#define SIERA_DS_KEY_EXPAND_STORAGE(name, type, st, dv, fl) \
+#define DSK_EXPAND_STORAGE(name, type, st, dv, fl) \
     uint8_t name[sizeof(type)];
 
 typedef struct {
-    #define SIERA_DS_KEY(...) SIERA_DS_KEY_EXPAND_STORAGE(__VA_ARGS__)
+    #define SIERA_DS_KEY(...) DSK_EXPAND_STORAGE(__VA_ARGS__)
     #include "siera_ds_keys.def"
     #undef SIERA_DS_KEY
 } siera_ds_cache_t;
@@ -358,8 +358,8 @@ typedef struct {
     siera_ds_flags_t         flags;
 } siera_ds_entry_t;
 
-#define SIERA_DS_KEY_EXPAND_ENTRY(name, type, st, dv, fl) \
-    [SIERA_DS_KEY_##name] = {                              \
+#define DSK_EXPAND_ENTRY(name, type, st, dv, fl) \
+    [DSK_##name] = {                              \
         .name        = #name,                              \
         .stream_type = (st),                               \
         .size        = sizeof(type),                       \
@@ -367,13 +367,13 @@ typedef struct {
         .flags       = (fl),                               \
     },
 
-static const siera_ds_entry_t _siera_ds_entry_table[SIERA_DS_KEY_COUNT] = {
-    #define SIERA_DS_KEY(...) SIERA_DS_KEY_EXPAND_ENTRY(__VA_ARGS__)
+static const siera_ds_entry_t _siera_ds_entry_table[DSK_COUNT] = {
+    #define SIERA_DS_KEY(...) DSK_EXPAND_ENTRY(__VA_ARGS__)
     #include "siera_ds_keys.def"
     #undef SIERA_DS_KEY
 };
 
-#define SIERA_DS_KEY_EXPAND_DEFAULT(name, type, st, dv, fl) \
+#define DSK_EXPAND_DEFAULT(name, type, st, dv, fl) \
 {                                                            \
     type _tmp = (dv);                                        \
     memcpy((uint8_t *)cache + offsetof(siera_ds_cache_t, name), \
@@ -381,7 +381,7 @@ static const siera_ds_entry_t _siera_ds_entry_table[SIERA_DS_KEY_COUNT] = {
 }
 
 static inline void _siera_ds_apply_defaults(siera_ds_cache_t *cache) {
-    #define SIERA_DS_KEY(...) SIERA_DS_KEY_EXPAND_DEFAULT(__VA_ARGS__)
+    #define SIERA_DS_KEY(...) DSK_EXPAND_DEFAULT(__VA_ARGS__)
     #include "siera_ds_keys.def"
     #undef SIERA_DS_KEY
 }
@@ -425,7 +425,7 @@ typedef struct {
     siera_event_bus_t       *events;    // borrowed
     siera_timer_mgr_t       *timers;    // borrowed
     uint32_t                 flush_interval_ms;
-    uint32_t                 dirty[(SIERA_DS_KEY_COUNT + 31) / 32];
+    uint32_t                 dirty[(DSK_COUNT + 31) / 32];
     siera_ds_stream_t       *stream_map[SIERA_DS_STREAM_TYPE_COUNT];
     siera_timer_t            flush_timer;
 } siera_ds_t;
@@ -476,7 +476,7 @@ static int ds_flush(siera_ds_t *ds) {
     siera_ds_stream_t *s = ds_stream(ds, SIERA_DS_NVS);
     if (!s || !s->api->write) return 0;
     int flushed = 0;
-    for (int i = 0; i < SIERA_DS_KEY_COUNT; i++) {
+    for (int i = 0; i < DSK_COUNT; i++) {
         uint32_t word = i / 32, bit = 1u << (i % 32);
         if (ds->dirty[word] & bit) {
             const siera_ds_entry_t *e = &ds->entries[i];
@@ -510,7 +510,7 @@ int siera_ds_init(siera_ds_t *ds, const siera_ds_config_t *config) {
     _siera_ds_apply_defaults(&ds->cache);
 
     // Hydrate from streams
-    for (int i = 0; i < SIERA_DS_KEY_COUNT; i++) {
+    for (int i = 0; i < DSK_COUNT; i++) {
         const siera_ds_entry_t *e = &ds->entries[i];
         if (e->stream_type == SIERA_DS_RAM) continue;
         siera_ds_stream_t *s = ds_stream(ds, e->stream_type);
@@ -530,7 +530,7 @@ int siera_ds_init(siera_ds_t *ds, const siera_ds_config_t *config) {
 }
 
 int siera_ds_read(const siera_ds_t *ds, siera_ds_key_t key, void *out) {
-    if (key >= SIERA_DS_KEY_COUNT) return -1;
+    if (key >= DSK_COUNT) return -1;
     const siera_ds_entry_t *e = &ds->entries[key];
 
     if (e->stream_type != SIERA_DS_RAM && e->stream_type != SIERA_DS_NVS) {
@@ -546,7 +546,7 @@ int siera_ds_read(const siera_ds_t *ds, siera_ds_key_t key, void *out) {
 }
 
 int siera_ds_write(siera_ds_t *ds, siera_ds_key_t key, const void *in) {
-    if (key >= SIERA_DS_KEY_COUNT) return -1;
+    if (key >= DSK_COUNT) return -1;
     const siera_ds_entry_t *e = &ds->entries[key];
     if (e->flags & SIERA_DS_READONLY) return -1;
 
@@ -588,13 +588,13 @@ void siera_ds_deinit(siera_ds_t *ds) {
 }
 
 const char *siera_ds_key_name(siera_ds_key_t key) {
-    return (key < SIERA_DS_KEY_COUNT) ? _siera_ds_entry_table[key].name : "?";
+    return (key < DSK_COUNT) ? _siera_ds_entry_table[key].name : "?";
 }
 size_t siera_ds_key_size(siera_ds_key_t key) {
-    return (key < SIERA_DS_KEY_COUNT) ? _siera_ds_entry_table[key].size : 0;
+    return (key < DSK_COUNT) ? _siera_ds_entry_table[key].size : 0;
 }
 siera_ds_stream_type_t siera_ds_key_stream_type(siera_ds_key_t key) {
-    return (key < SIERA_DS_KEY_COUNT)
+    return (key < DSK_COUNT)
         ? _siera_ds_entry_table[key].stream_type : SIERA_DS_RAM;
 }
 ```

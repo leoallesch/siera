@@ -423,12 +423,12 @@ protected:
 };
 
 TEST_F(SieraDs, Defaults) {
-    uint8_t h; siera_ds_read(&ds, SIERA_DS_KEY_ALARM_HOUR, &h); EXPECT_EQ(h, 7);
+    uint8_t h; siera_ds_read(&ds, DSK_ALARM_HOUR, &h); EXPECT_EQ(h, 7);
 }
 
 TEST_F(SieraDs, Roundtrip) {
-    uint8_t v = 22; siera_ds_write(&ds, SIERA_DS_KEY_ALARM_HOUR, &v);
-    uint8_t out; siera_ds_read(&ds, SIERA_DS_KEY_ALARM_HOUR, &out); EXPECT_EQ(out, 22);
+    uint8_t v = 22; siera_ds_write(&ds, DSK_ALARM_HOUR, &v);
+    uint8_t out; siera_ds_read(&ds, DSK_ALARM_HOUR, &out); EXPECT_EQ(out, 22);
 }
 
 TEST_F(SieraDs, NoEventOnSameValue) {
@@ -436,18 +436,18 @@ TEST_F(SieraDs, NoEventOnSameValue) {
     auto counter = [](const siera_event_t *, void *c) { (*(int *)c)++; };
     siera_event_sub_t sub; siera_event_sub_init(&sub, counter, &count);
     siera_event_subscribe(&events, &sub);
-    uint8_t v = 7; siera_ds_write(&ds, SIERA_DS_KEY_ALARM_HOUR, &v); EXPECT_EQ(count, 0);
-    v = 8; siera_ds_write(&ds, SIERA_DS_KEY_ALARM_HOUR, &v); EXPECT_EQ(count, 1);
+    uint8_t v = 7; siera_ds_write(&ds, DSK_ALARM_HOUR, &v); EXPECT_EQ(count, 0);
+    v = 8; siera_ds_write(&ds, DSK_ALARM_HOUR, &v); EXPECT_EQ(count, 1);
 }
 
 TEST_F(SieraDs, PersistWriteThrough) {
-    uint8_t v = 99; siera_ds_write(&ds, SIERA_DS_KEY_BRIGHTNESS, &v);
+    uint8_t v = 99; siera_ds_write(&ds, DSK_BRIGHTNESS, &v);
     siera_ds_deinit(&ds);
     siera_event_bus_t ev2; siera_timer_mgr_t tm2;
     siera_event_bus_init(&ev2); siera_timer_mgr_init(&tm2, mock_now);
     siera_ds_t ds2; siera_ds_config_t c2 = { streams, &ev2, &tm2, 0 };
     siera_ds_init(&ds2, &c2);
-    uint8_t out; siera_ds_read(&ds2, SIERA_DS_KEY_BRIGHTNESS, &out);
+    uint8_t out; siera_ds_read(&ds2, DSK_BRIGHTNESS, &out);
     EXPECT_EQ(out, 99); siera_ds_deinit(&ds2);
 }
 
@@ -456,7 +456,7 @@ TEST_F(SieraDs, BatchedFlush) {
     config.flush_interval_ms = 1000;
     siera_event_bus_init(&events); siera_timer_mgr_init(&timers, mock_now);
     siera_ds_init(&ds, &config);
-    uint8_t v = 77; siera_ds_write(&ds, SIERA_DS_KEY_BRIGHTNESS, &v);
+    uint8_t v = 77; siera_ds_write(&ds, DSK_BRIGHTNESS, &v);
 
     // Not flushed yet
     s_now = 500; siera_timer_tick(&timers);
@@ -464,28 +464,28 @@ TEST_F(SieraDs, BatchedFlush) {
     siera_event_bus_init(&ev2); siera_timer_mgr_init(&tm2, mock_now);
     siera_ds_config_t c2 = { streams, &ev2, &tm2, 0 };
     siera_ds_init(&ds2, &c2);
-    uint8_t out; siera_ds_read(&ds2, SIERA_DS_KEY_BRIGHTNESS, &out);
+    uint8_t out; siera_ds_read(&ds2, DSK_BRIGHTNESS, &out);
     EXPECT_EQ(out, 128); siera_ds_deinit(&ds2);
 
     // Now flushed
     s_now = 1000; siera_timer_tick(&timers);
     siera_event_bus_init(&ev2); siera_timer_mgr_init(&tm2, mock_now);
     siera_ds_init(&ds2, &c2);
-    siera_ds_read(&ds2, SIERA_DS_KEY_BRIGHTNESS, &out);
+    siera_ds_read(&ds2, DSK_BRIGHTNESS, &out);
     EXPECT_EQ(out, 77); siera_ds_deinit(&ds2);
 }
 
 TEST_F(SieraDs, ReadonlyRejects) {
-    bool v = true; EXPECT_NE(siera_ds_write(&ds, SIERA_DS_KEY_BUTTON_SET, &v), 0);
+    bool v = true; EXPECT_NE(siera_ds_write(&ds, DSK_BUTTON_SET, &v), 0);
 }
 
 TEST_F(SieraDs, HwWriteCallsStream) {
-    bool led = true; siera_ds_write(&ds, SIERA_DS_KEY_LED_STATUS, &led); EXPECT_TRUE(s_hw_written);
+    bool led = true; siera_ds_write(&ds, DSK_LED_STATUS, &led); EXPECT_TRUE(s_hw_written);
 }
 
 TEST_F(SieraDs, HwReadFresh) {
-    s_adc = 4200; uint16_t b; siera_ds_read(&ds, SIERA_DS_KEY_BATTERY_MV, &b); EXPECT_EQ(b, 4200);
-    s_adc = 3100; siera_ds_read(&ds, SIERA_DS_KEY_BATTERY_MV, &b); EXPECT_EQ(b, 3100);
+    s_adc = 4200; uint16_t b; siera_ds_read(&ds, DSK_BATTERY_MV, &b); EXPECT_EQ(b, 4200);
+    s_adc = 3100; siera_ds_read(&ds, DSK_BATTERY_MV, &b); EXPECT_EQ(b, 3100);
 }
 ```
 

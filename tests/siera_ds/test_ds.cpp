@@ -23,7 +23,7 @@ struct PEntry {
 static PEntry s_store[32];
 static int s_store_n;
 
-static int mock_persist_read(void*, siera_ds_key_t key, void* buf, size_t size)
+static int mock_persist_read(void*, siera_dsk_t key, void* buf, size_t size)
 {
   const char* n = siera_ds_key_name(key);
   for(int i = 0; i < s_store_n; i++)
@@ -34,7 +34,7 @@ static int mock_persist_read(void*, siera_ds_key_t key, void* buf, size_t size)
   return -1;
 }
 
-static int mock_persist_write(void*, siera_ds_key_t key, const void* buf, size_t size)
+static int mock_persist_write(void*, siera_dsk_t key, const void* buf, size_t size)
 {
   const char* n = siera_ds_key_name(key);
   for(int i = 0; i < s_store_n; i++)
@@ -63,19 +63,19 @@ static bool s_gpio = false;
 static uint16_t s_adc = 3300;
 static bool s_hw_written = false;
 
-static int mock_gpio_read(void*, siera_ds_key_t, void* buf, size_t)
+static int mock_gpio_read(void*, siera_dsk_t, void* buf, size_t)
 {
   memcpy(buf, &s_gpio, sizeof(bool));
   return 0;
 }
-static int mock_gpio_write(void*, siera_ds_key_t, const void*, size_t)
+static int mock_gpio_write(void*, siera_dsk_t, const void*, size_t)
 {
   s_hw_written = true;
   return 0;
 }
 static const siera_ds_stream_api_t mock_gpio_api = { mock_gpio_read, mock_gpio_write };
 
-static int mock_adc_read(void*, siera_ds_key_t, void* buf, size_t)
+static int mock_adc_read(void*, siera_dsk_t, void* buf, size_t)
 {
   memcpy(buf, &s_adc, sizeof(uint16_t));
   return 0;
@@ -121,16 +121,16 @@ TEST_GROUP(SieraDs)
 TEST(SieraDs, Defaults)
 {
   uint8_t h;
-  siera_ds_read(&ds, SIERA_DS_KEY_ALARM_HOUR, &h);
+  siera_ds_read(&ds, DSK_ALARM_HOUR, &h);
   CHECK_EQUAL(7, h);
 }
 
 TEST(SieraDs, Roundtrip)
 {
   uint8_t v = 22;
-  siera_ds_write(&ds, SIERA_DS_KEY_ALARM_HOUR, &v);
+  siera_ds_write(&ds, DSK_ALARM_HOUR, &v);
   uint8_t out;
-  siera_ds_read(&ds, SIERA_DS_KEY_ALARM_HOUR, &out);
+  siera_ds_read(&ds, DSK_ALARM_HOUR, &out);
   CHECK_EQUAL(22, out);
 }
 
@@ -143,11 +143,11 @@ TEST(SieraDs, NoEventOnSameValue)
   siera_ds_subscribe_all(&ds, &sub);
 
   uint8_t v = 7; // default is 7
-  siera_ds_write(&ds, SIERA_DS_KEY_ALARM_HOUR, &v);
+  siera_ds_write(&ds, DSK_ALARM_HOUR, &v);
   CHECK_EQUAL(0, count);
 
   v = 8;
-  siera_ds_write(&ds, SIERA_DS_KEY_ALARM_HOUR, &v);
+  siera_ds_write(&ds, DSK_ALARM_HOUR, &v);
   CHECK_EQUAL(1, count);
 }
 
@@ -163,14 +163,14 @@ TEST(SieraDs, EventCarriesNewData)
   siera_ds_subscribe_all(&ds, &sub);
 
   uint8_t v = 99;
-  siera_ds_write(&ds, SIERA_DS_KEY_ALARM_HOUR, &v);
+  siera_ds_write(&ds, DSK_ALARM_HOUR, &v);
   CHECK_EQUAL(99, captured);
 }
 
 TEST(SieraDs, PersistWriteThrough)
 {
   uint8_t v = 99;
-  siera_ds_write(&ds, SIERA_DS_KEY_BRIGHTNESS, &v);
+  siera_ds_write(&ds, DSK_BRIGHTNESS, &v);
   siera_ds_deinit(&ds);
 
   siera_timer_mgr_t tm2;
@@ -180,7 +180,7 @@ TEST(SieraDs, PersistWriteThrough)
   siera_ds_init(&ds2, streams, SIERA_NUM_ELEMENTS(streams), &tm2, 0);
 
   uint8_t out;
-  siera_ds_read(&ds2, SIERA_DS_KEY_BRIGHTNESS, &out);
+  siera_ds_read(&ds2, DSK_BRIGHTNESS, &out);
   CHECK_EQUAL(99, out);
   siera_ds_deinit(&ds2);
 }
@@ -192,7 +192,7 @@ TEST(SieraDs, BatchedFlush)
   siera_ds_init(&ds, streams, SIERA_NUM_ELEMENTS(streams), &timers, 1000);
 
   uint8_t v = 77;
-  siera_ds_write(&ds, SIERA_DS_KEY_BRIGHTNESS, &v);
+  siera_ds_write(&ds, DSK_BRIGHTNESS, &v);
 
   // Not yet flushed at t=500
   s_now = 500;
@@ -204,7 +204,7 @@ TEST(SieraDs, BatchedFlush)
 
     siera_ds_init(&ds2, streams, SIERA_NUM_ELEMENTS(streams), &tm2, 0);
     uint8_t out;
-    siera_ds_read(&ds2, SIERA_DS_KEY_BRIGHTNESS, &out);
+    siera_ds_read(&ds2, DSK_BRIGHTNESS, &out);
     CHECK_EQUAL(128, out); // default, not yet flushed
     siera_ds_deinit(&ds2);
   }
@@ -219,7 +219,7 @@ TEST(SieraDs, BatchedFlush)
 
     siera_ds_init(&ds2, streams, SIERA_NUM_ELEMENTS(streams), &tm2, 0);
     uint8_t out;
-    siera_ds_read(&ds2, SIERA_DS_KEY_BRIGHTNESS, &out);
+    siera_ds_read(&ds2, DSK_BRIGHTNESS, &out);
     CHECK_EQUAL(77, out);
     siera_ds_deinit(&ds2);
   }
@@ -228,13 +228,13 @@ TEST(SieraDs, BatchedFlush)
 TEST(SieraDs, ReadonlyRejects)
 {
   bool v = true;
-  CHECK(siera_ds_write(&ds, SIERA_DS_KEY_BUTTON_SET, &v) != 0);
+  CHECK(siera_ds_write(&ds, DSK_BUTTON_SET, &v) != 0);
 }
 
 TEST(SieraDs, HwWriteCallsStream)
 {
   bool led = true;
-  siera_ds_write(&ds, SIERA_DS_KEY_LED_STATUS, &led);
+  siera_ds_write(&ds, DSK_LED_STATUS, &led);
   CHECK_TRUE(s_hw_written);
 }
 
@@ -242,11 +242,11 @@ TEST(SieraDs, HwReadFresh)
 {
   s_adc = 4200;
   uint16_t b;
-  siera_ds_read(&ds, SIERA_DS_KEY_BATTERY_MV, &b);
+  siera_ds_read(&ds, DSK_BATTERY_MV, &b);
   CHECK_EQUAL(4200, b);
 
   s_adc = 3100;
-  siera_ds_read(&ds, SIERA_DS_KEY_BATTERY_MV, &b);
+  siera_ds_read(&ds, DSK_BATTERY_MV, &b);
   CHECK_EQUAL(3100, b);
 }
 
@@ -257,7 +257,7 @@ TEST(SieraDs, DeinitFlushesRemaining)
   siera_ds_init(&ds, streams, SIERA_NUM_ELEMENTS(streams), &timers, 10000);
 
   uint8_t v = 55;
-  siera_ds_write(&ds, SIERA_DS_KEY_BRIGHTNESS, &v);
+  siera_ds_write(&ds, DSK_BRIGHTNESS, &v);
   siera_ds_deinit(&ds); // should flush before stopping timer
 
   siera_ds_t ds2;
@@ -266,7 +266,7 @@ TEST(SieraDs, DeinitFlushesRemaining)
 
   siera_ds_init(&ds2, streams, SIERA_NUM_ELEMENTS(streams), &tm2, 0);
   uint8_t out;
-  siera_ds_read(&ds2, SIERA_DS_KEY_BRIGHTNESS, &out);
+  siera_ds_read(&ds2, DSK_BRIGHTNESS, &out);
   CHECK_EQUAL(55, out);
   siera_ds_deinit(&ds2);
 }

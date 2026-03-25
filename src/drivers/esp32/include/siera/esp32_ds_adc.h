@@ -14,7 +14,7 @@
  *
  * Usage:
  *   static siera_esp32_ds_adc_channel_t channels[] = {
- *     { SIERA_DS_KEY_BATTERY_MV, ADC_CHANNEL_6 },
+ *     { DSK_BATTERY_MV, ADC_CHANNEL_6 },
  *   };
  *   static siera_esp32_ds_adc_t adc_stream;
  *   siera_esp32_ds_adc_init(&adc_stream, &adc_hal.interface, channels, 1);
@@ -26,7 +26,7 @@
  */
 
 typedef struct {
-  siera_ds_key_t key;
+  siera_dsk_t key;
   uint32_t       channel;
 } siera_esp32_ds_adc_channel_t;
 

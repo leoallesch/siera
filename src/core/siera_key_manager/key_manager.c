@@ -1,6 +1,6 @@
 #include "siera/key_manager.h"
 
-static void emit_event(siera_key_manager_t* instance, siera_ds_key_t key, siera_key_event_t event)
+static void emit_event(siera_key_manager_t* instance, siera_dsk_t key, siera_key_event_t event)
 {
   siera_key_event_data_t data = {
     .key   = key,
@@ -17,7 +17,7 @@ static void on_long_press_timeout(void* ctx)
   emit_event(instance, instance->current_key, SIERA_KEY_EVENT_LONGPRESS);
 }
 
-static void process_key(siera_key_manager_t* instance, siera_ds_key_t key, bool pressed)
+static void process_key(siera_key_manager_t* instance, siera_dsk_t key, bool pressed)
 {
   instance->current_key = key;
 
@@ -60,9 +60,9 @@ void siera_key_manager_init(
   siera_key_manager_t*  instance,
   siera_ds_t*           ds,
   siera_timer_mgr_t*    timers,
-  siera_ds_key_t        output_key,
+  siera_dsk_t        output_key,
   uint32_t              long_press_duration_ms,
-  const siera_ds_key_t* input_keys,
+  const siera_dsk_t* input_keys,
   uint8_t               input_keys_count)
 {
   instance->ds                     = ds;

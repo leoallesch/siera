@@ -1,6 +1,6 @@
 #include "siera/ds_stream.h"
 
-static int null_read(void* ctx, siera_ds_key_t key, void* buf, size_t size)
+static int null_read(void* ctx, siera_dsk_t key, void* buf, size_t size)
 {
   (void)ctx;
   (void)key;
@@ -9,7 +9,7 @@ static int null_read(void* ctx, siera_ds_key_t key, void* buf, size_t size)
   return 0;
 }
 
-static int null_write(void* ctx, siera_ds_key_t key, const void* buf, size_t size)
+static int null_write(void* ctx, siera_dsk_t key, const void* buf, size_t size)
 {
   (void)ctx;
   (void)key;

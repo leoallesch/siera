@@ -22,12 +22,12 @@ static void on_tick(void* ctx)
   siera_ds_t* ds = ctx;
 
   uint32_t counter;
-  siera_ds_read(ds, SIERA_DS_KEY_COUNTER, &counter);
+  siera_ds_read(ds, DSK_COUNTER, &counter);
   counter++;
-  siera_ds_write(ds, SIERA_DS_KEY_COUNTER, &counter);
+  siera_ds_write(ds, DSK_COUNTER, &counter);
 
   bool armed;
-  siera_ds_read(ds, SIERA_DS_KEY_ARMED, &armed);
+  siera_ds_read(ds, DSK_ARMED, &armed);
   printf("[tick] counter=%u  armed=%d\n", counter, (int)armed);
 }
 
@@ -35,7 +35,7 @@ static void on_arm(void* ctx)
 {
   siera_ds_t* ds = ctx;
   bool armed = true;
-  siera_ds_write(ds, SIERA_DS_KEY_ARMED, &armed);
+  siera_ds_write(ds, DSK_ARMED, &armed);
 }
 
 /* ── Change subscriber ──────────────────────────────────────────────────── */

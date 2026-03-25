@@ -23,7 +23,7 @@ static void flush(siera_sim_ds_nvs_t* self)
   fclose(f);
 }
 
-static int _read(void* ctx, siera_ds_key_t key, void* buf, size_t size)
+static int _read(void* ctx, siera_dsk_t key, void* buf, size_t size)
 {
   siera_sim_ds_nvs_t* self = (siera_sim_ds_nvs_t*)ctx;
   char key_name[8];
@@ -36,7 +36,7 @@ static int _read(void* ctx, siera_ds_key_t key, void* buf, size_t size)
   return 0;
 }
 
-static int _write(void* ctx, siera_ds_key_t key, const void* buf, size_t size)
+static int _write(void* ctx, siera_dsk_t key, const void* buf, size_t size)
 {
   siera_sim_ds_nvs_t* self = (siera_sim_ds_nvs_t*)ctx;
   if(size > SIERA_SIM_DS_NVS_MAX_VALUE_SIZE)

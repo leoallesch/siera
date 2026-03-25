@@ -13,8 +13,8 @@
  *
  * Usage:
  *   static siera_esp32_ds_gpio_pin_t pins[] = {
- *     { SIERA_DS_KEY_LED_STATUS,  GPIO_NUM_2,  SIERA_GPIO_DIR_OUTPUT, SIERA_GPIO_PULL_NONE },
- *     { SIERA_DS_KEY_BUTTON_SET,  GPIO_NUM_0,  SIERA_GPIO_DIR_INPUT,  SIERA_GPIO_PULL_UP   },
+ *     { DSK_LED_STATUS,  GPIO_NUM_2,  SIERA_GPIO_DIR_OUTPUT, SIERA_GPIO_PULL_NONE },
+ *     { DSK_BUTTON_SET,  GPIO_NUM_0,  SIERA_GPIO_DIR_INPUT,  SIERA_GPIO_PULL_UP   },
  *   };
  *   static siera_esp32_ds_gpio_t gpio_stream;
  *   siera_esp32_ds_gpio_init(&gpio_stream, &gpio_hal.interface, pins, 2);
@@ -26,7 +26,7 @@
  */
 
 typedef struct {
-  siera_ds_key_t   key;
+  siera_dsk_t   key;
   uint32_t         pin;
   siera_gpio_dir_t  dir;
   siera_gpio_pull_t pull;

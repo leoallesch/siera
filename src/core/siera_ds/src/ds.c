@@ -5,7 +5,12 @@
  * up automatically via the __has_include() check in ds_keys.h.
  */
 #include <string.h>
+#include <stdbool.h>
 #include "siera/ds.h"
+#include "ds_keys_internal.h"
+
+static siera_ds_cache_t _ds_cache;
+static bool _ds_dirty[DSK_COUNT];
 
 /* ── Entry table ────────────────────────────────────────────────────────── */
 
@@ -18,9 +23,9 @@ const siera_ds_entry_t _siera_ds_entry_table[] = {
 
 #undef _DS_EXPAND_ENTRY
 
-static inline const siera_ds_entry_t* ds_find_entry(siera_ds_key_t key)
+static inline const siera_ds_entry_t* ds_find_entry(siera_dsk_t key)
 {
-  return (key < SIERA_DS_KEY_COUNT) ? &_siera_ds_entry_table[key] : NULL;
+  return (key < DSK_COUNT) ? &_siera_ds_entry_table[key] : NULL;
 }
 
 static inline siera_ds_stream_t* ds_stream(const siera_ds_t* ds,
@@ -35,13 +40,11 @@ static void ds_flush(void* ctx)
   siera_ds_stream_t* s = ds_stream(ds, SIERA_DS_NVS);
   if(!s || !s->api->write)
     return;
-  for(int i = 0; i < SIERA_DS_KEY_COUNT; i++) {
-    uint32_t word = (uint32_t)i / 32u;
-    uint32_t bit = 1u << ((uint32_t)i % 32u);
-    if(ds->dirty[word] & bit) {
+  for(int i = 0; i < DSK_COUNT; i++) {
+    if(_ds_dirty[i]) {
       const siera_ds_entry_t* e = &ds->entries[i];
-      if(s->api->write(s->ctx, (siera_ds_key_t)i, (const uint8_t*)&ds->cache + e->offset, e->size) == 0)
-        ds->dirty[word] &= ~bit;
+      if(s->api->write(s->ctx, (siera_dsk_t)i, (const uint8_t*)&_ds_cache + e->offset, e->size) == 0)
+        _ds_dirty[i] = false;
     }
   }
 }
@@ -63,16 +66,16 @@ int siera_ds_init(siera_ds_t* ds,
       ds->stream_map[streams[i].type] = streams[i].stream;
   }
 
-  _siera_ds_apply_defaults(&ds->cache);
+  _siera_ds_apply_defaults(&_ds_cache);
 
   /* Hydrate persist and hardware keys from their streams */
-  for(int i = 0; i < SIERA_DS_KEY_COUNT; i++) {
+  for(int i = 0; i < DSK_COUNT; i++) {
     const siera_ds_entry_t* e = &ds->entries[i];
     if(e->stream_type == SIERA_DS_RAM)
       continue;
     siera_ds_stream_t* s = ds_stream(ds, e->stream_type);
     if(s && s->api->read)
-      s->api->read(s->ctx, (siera_ds_key_t)i, (uint8_t*)&ds->cache + e->offset, e->size);
+      s->api->read(s->ctx, (siera_dsk_t)i, (uint8_t*)&_ds_cache + e->offset, e->size);
   }
 
   /* Start auto-flush timer if interval > 0 */
@@ -83,7 +86,7 @@ int siera_ds_init(siera_ds_t* ds,
   return 0;
 }
 
-int siera_ds_read(const siera_ds_t* ds, siera_ds_key_t key, void* out)
+int siera_ds_read(const siera_ds_t* ds, siera_dsk_t key, void* out)
 {
   const siera_ds_entry_t* e = ds_find_entry(key);
   if(!e)
@@ -93,14 +96,14 @@ int siera_ds_read(const siera_ds_t* ds, siera_ds_key_t key, void* out)
   if(e->stream_type >= SIERA_DS_HARDWARE_START) {
     siera_ds_stream_t* s = ds_stream(ds, e->stream_type);
     if(s && s->api->read)
-      s->api->read(s->ctx, key, (uint8_t*)&((siera_ds_t*)ds)->cache + e->offset, e->size);
+      s->api->read(s->ctx, key, (uint8_t*)&_ds_cache + e->offset, e->size);
   }
 
-  memcpy(out, (const uint8_t*)&ds->cache + e->offset, e->size);
+  memcpy(out, (const uint8_t*)&_ds_cache + e->offset, e->size);
   return 0;
 }
 
-int siera_ds_write(siera_ds_t* ds, siera_ds_key_t key, const void* in)
+int siera_ds_write(siera_ds_t* ds, siera_dsk_t key, const void* in)
 {
   const siera_ds_entry_t* e = ds_find_entry(key);
   if(!e)
@@ -108,14 +111,14 @@ int siera_ds_write(siera_ds_t* ds, siera_ds_key_t key, const void* in)
   if(e->flags & SIERA_DS_READONLY)
     return -1;
 
-  uint8_t* cached = (uint8_t*)&ds->cache + e->offset;
+  uint8_t* cached = (uint8_t*)&_ds_cache + e->offset;
   if(memcmp(cached, in, e->size) == 0)
     return 0; /* no change */
 
   memcpy(cached, in, e->size);
 
   if(e->stream_type == SIERA_DS_NVS && ds->flush_interval_ms > 0) {
-    ds->dirty[key / 32] |= (1u << ((uint32_t)key % 32u));
+    _ds_dirty[key] = true;
   }
   else if(e->stream_type != SIERA_DS_RAM) {
     siera_ds_stream_t* s = ds_stream(ds, e->stream_type);
@@ -152,19 +155,19 @@ void siera_ds_deinit(siera_ds_t* ds)
   ds_flush(ds);
 }
 
-const char* siera_ds_key_name(siera_ds_key_t key)
+const char* siera_ds_key_name(siera_dsk_t key)
 {
   const siera_ds_entry_t* e = ds_find_entry(key);
   return e ? e->name : "?";
 }
 
-size_t siera_ds_key_size(siera_ds_key_t key)
+size_t siera_ds_key_size(siera_dsk_t key)
 {
   const siera_ds_entry_t* e = ds_find_entry(key);
   return e ? e->size : 0;
 }
 
-siera_ds_stream_type_t siera_ds_key_stream_type(siera_ds_key_t key)
+siera_ds_stream_type_t siera_ds_key_stream_type(siera_dsk_t key)
 {
   const siera_ds_entry_t* e = ds_find_entry(key);
   return e ? e->stream_type : SIERA_DS_RAM;

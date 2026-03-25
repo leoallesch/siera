@@ -11,7 +11,7 @@
  * Stream API — GPIO
  * -------------------------------------------------------------------------*/
 
-static siera_sim_input_ctx_t* find_ctx(siera_sim_t* sim, siera_ds_key_t key)
+static siera_sim_input_ctx_t* find_ctx(siera_sim_t* sim, siera_dsk_t key)
 {
   for(uint8_t i = 0; i < SIERA_SIM_MAX_INPUTS; i++) {
     if(sim->input_ctx[i].sim && sim->input_ctx[i].key == key)
@@ -20,7 +20,7 @@ static siera_sim_input_ctx_t* find_ctx(siera_sim_t* sim, siera_ds_key_t key)
   return NULL;
 }
 
-static int gpio_read(void* ctx, siera_ds_key_t key, void* buf, size_t size)
+static int gpio_read(void* ctx, siera_dsk_t key, void* buf, size_t size)
 {
   (void)size;
   siera_sim_t* sim = (siera_sim_t*)ctx;
@@ -31,7 +31,7 @@ static int gpio_read(void* ctx, siera_ds_key_t key, void* buf, size_t size)
   return 0;
 }
 
-static int gpio_write(void* ctx, siera_ds_key_t key, const void* buf, size_t size)
+static int gpio_write(void* ctx, siera_dsk_t key, const void* buf, size_t size)
 {
   (void)size;
   siera_sim_t* sim = (siera_sim_t*)ctx;
@@ -48,7 +48,7 @@ static const siera_ds_stream_api_t gpio_api = { gpio_read, gpio_write };
  * Stream API — ADC
  * -------------------------------------------------------------------------*/
 
-static int adc_read(void* ctx, siera_ds_key_t key, void* buf, size_t size)
+static int adc_read(void* ctx, siera_dsk_t key, void* buf, size_t size)
 {
   (void)size;
   siera_sim_t* sim = (siera_sim_t*)ctx;
@@ -59,7 +59,7 @@ static int adc_read(void* ctx, siera_ds_key_t key, void* buf, size_t size)
   return 0;
 }
 
-static int adc_write(void* ctx, siera_ds_key_t key, const void* buf, size_t size)
+static int adc_write(void* ctx, siera_dsk_t key, const void* buf, size_t size)
 {
   (void)ctx;
   (void)key;

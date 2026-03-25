@@ -17,7 +17,7 @@
 /* ── GPIO datastream pin table ──────────────────────────────────────────── */
 
 static const siera_esp32_ds_gpio_pin_t g_gpio_pins[] = {
-  { SIERA_DS_KEY_LED_STATE, LED_PIN, SIERA_GPIO_DIR_OUTPUT, SIERA_GPIO_PULL_NONE },
+  { DSK_LED_STATE, LED_PIN, SIERA_GPIO_DIR_OUTPUT, SIERA_GPIO_PULL_NONE },
 };
 
 /* ── Timer callback: toggle LED every 500 ms ────────────────────────────── */
@@ -27,9 +27,9 @@ static void on_blink(void* ctx)
   siera_ds_t* ds = ctx;
 
   bool state;
-  siera_ds_read(ds, SIERA_DS_KEY_LED_STATE, &state);
+  siera_ds_read(ds, DSK_LED_STATE, &state);
   state = !state;
-  siera_ds_write(ds, SIERA_DS_KEY_LED_STATE, &state);
+  siera_ds_write(ds, DSK_LED_STATE, &state);
 }
 
 /* ── Change subscriber: log every datastream write ──────────────────────── */

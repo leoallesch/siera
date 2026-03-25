@@ -46,11 +46,11 @@
 - [ ] `lib/core/siera_ds/siera_ds_keys.def` — sample keys
 - [ ] `lib/core/siera_ds/src/ds_keys_internal.h`
   - [ ] `siera_ds_flags_t` (NONE, READONLY, SILENT)
-  - [ ] `SIERA_DS_KEY_EXPAND_ENUM` → `siera_ds_key_t` + `SIERA_DS_KEY_COUNT`
-  - [ ] `SIERA_DS_KEY_EXPAND_STORAGE` → `siera_ds_cache_t` (uint8_t arrays, offsetof)
+  - [ ] `DSK_EXPAND_ENUM` → `siera_ds_key_t` + `DSK_COUNT`
+  - [ ] `DSK_EXPAND_STORAGE` → `siera_ds_cache_t` (uint8_t arrays, offsetof)
   - [ ] `SIERA_DS_CACHE_SIZE`
-  - [ ] `siera_ds_entry_t` + `SIERA_DS_KEY_EXPAND_ENTRY` → entry table
-  - [ ] `SIERA_DS_KEY_EXPAND_DEFAULT` → `_siera_ds_apply_defaults()`
+  - [ ] `siera_ds_entry_t` + `DSK_EXPAND_ENTRY` → entry table
+  - [ ] `DSK_EXPAND_DEFAULT` → `_siera_ds_apply_defaults()`
   - [ ] `SIERA_DS_MAX_VALUE_SIZE`
 
 ### Stream interface

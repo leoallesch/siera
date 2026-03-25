@@ -3,6 +3,6 @@
 
 #include <stdint.h>
 
-typedef uint16_t siera_ds_key_t;
+typedef uint16_t siera_dsk_t;
 
 #endif /* DS_KEY_H */

@@ -16,8 +16,8 @@ static siera_sim_ds_nvs_t g_nvs;
 static siera_event_sub_t g_sim_input_sub;
 
 static const siera_sim_input_t g_sim_inputs[] = {
-  { SIERA_DS_KEY_BTN_PAUSE, SIERA_SIM_INPUT_BUTTON },
-  { SIERA_DS_KEY_BTN_RESET, SIERA_SIM_INPUT_BUTTON },
+  { DSK_BTN_PAUSE, SIERA_SIM_INPUT_BUTTON },
+  { DSK_BTN_RESET, SIERA_SIM_INPUT_BUTTON },
 };
 
 static const siera_sim_config_t g_sim_config = {

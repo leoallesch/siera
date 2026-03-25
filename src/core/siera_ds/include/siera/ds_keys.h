@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 /*
- * siera_ds_key_t is generated from the user-supplied SIERA_DS_KEYS(KEY) macro
+ * siera_dsk_t is generated from the user-supplied SIERA_DS_KEYS(KEY) macro
  * table defined in siera_ds_conf.h.
  *
  * To use siera_ds in your project:
@@ -28,10 +28,10 @@
 #endif
 
 enum {
-#define _DS_KEY_ENUM(name, type, st, dv, fl) SIERA_DS_KEY_##name,
+#define _DS_KEY_ENUM(name, type, st, dv, fl) DSK_##name,
     SIERA_DS_KEYS(_DS_KEY_ENUM)
 #undef _DS_KEY_ENUM
-    SIERA_DS_KEY_COUNT
+    DSK_COUNT
 };
 
 #endif

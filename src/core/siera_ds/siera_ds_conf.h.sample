@@ -19,7 +19,7 @@
  *
  *   KEY(name, c_type, stream_type, default_value, flags)
  *
- *   name          Identifier suffix.  "BRIGHTNESS" → SIERA_DS_KEY_BRIGHTNESS.
+ *   name          Identifier suffix.  "BRIGHTNESS" → DSK_BRIGHTNESS.
  *   c_type        C type stored in the cache (uint8_t, bool, float, …).
  *   stream_type   Where the value lives:
  *                   SIERA_DS_RAM     — volatile, in-memory only

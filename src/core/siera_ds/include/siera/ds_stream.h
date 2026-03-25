@@ -4,12 +4,12 @@
 #include <stdint.h>
 #include <stddef.h>
 
-/* siera_ds_key_t is defined in ds_keys.h; included by ds.h after ds_stream.h */
-#include "siera/ds_key.h"
+/* siera_dsk_t is defined in dsk.h; included by ds.h after ds_stream.h */
+#include "siera/dsk.h"
 
 typedef struct {
-    int (*read)(void *ctx, siera_ds_key_t key, void *buf, size_t size);
-    int (*write)(void *ctx, siera_ds_key_t key, const void *buf, size_t size);
+    int (*read)(void *ctx, siera_dsk_t key, void *buf, size_t size);
+    int (*write)(void *ctx, siera_dsk_t key, const void *buf, size_t size);
 } siera_ds_stream_api_t;
 
 typedef struct {

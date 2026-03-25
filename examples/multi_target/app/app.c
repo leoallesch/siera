@@ -12,9 +12,9 @@ static void on_tick(void* ctx)
 {
   (void)ctx;
   uint32_t counter;
-  siera_ds_read(&g_ds, SIERA_DS_KEY_COUNTER, &counter);
+  siera_ds_read(&g_ds, DSK_COUNTER, &counter);
   counter++;
-  siera_ds_write(&g_ds, SIERA_DS_KEY_COUNTER, &counter);
+  siera_ds_write(&g_ds, DSK_COUNTER, &counter);
   printf("[app] counter=%u\n", counter);
 }
 

@@ -3,7 +3,7 @@
 #include <stddef.h>
 
 static const siera_esp32_ds_adc_channel_t* find_channel(const siera_esp32_ds_adc_t* drv,
-  siera_ds_key_t key)
+  siera_dsk_t key)
 {
   for(size_t i = 0; i < drv->channel_count; i++) {
     if(drv->channels[i].key == key)
@@ -12,7 +12,7 @@ static const siera_esp32_ds_adc_channel_t* find_channel(const siera_esp32_ds_adc
   return NULL;
 }
 
-static int _read(void* ctx, siera_ds_key_t key, void* buf, size_t size)
+static int _read(void* ctx, siera_dsk_t key, void* buf, size_t size)
 {
   (void)size;
   siera_esp32_ds_adc_t* drv = (siera_esp32_ds_adc_t*)ctx;
@@ -23,7 +23,7 @@ static int _read(void* ctx, siera_ds_key_t key, void* buf, size_t size)
   return siera_adc_read(drv->hal, ch->channel, (siera_adc_counts_t*)buf);
 }
 
-static int _write(void* ctx, siera_ds_key_t key, const void* buf, size_t size)
+static int _write(void* ctx, siera_dsk_t key, const void* buf, size_t size)
 {
   (void)ctx;
   (void)key;

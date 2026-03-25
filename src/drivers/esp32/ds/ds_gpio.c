@@ -3,7 +3,7 @@
 #include <stddef.h>
 
 static const siera_esp32_ds_gpio_pin_t* find_pin(const siera_esp32_ds_gpio_t* drv,
-  siera_ds_key_t key)
+  siera_dsk_t key)
 {
   for(size_t i = 0; i < drv->pin_count; i++) {
     if(drv->pins[i].key == key)
@@ -12,7 +12,7 @@ static const siera_esp32_ds_gpio_pin_t* find_pin(const siera_esp32_ds_gpio_t* dr
   return NULL;
 }
 
-static int _read(void* ctx, siera_ds_key_t key, void* buf, size_t size)
+static int _read(void* ctx, siera_dsk_t key, void* buf, size_t size)
 {
   (void)size;
   siera_esp32_ds_gpio_t* drv = (siera_esp32_ds_gpio_t*)ctx;
@@ -29,7 +29,7 @@ static int _read(void* ctx, siera_ds_key_t key, void* buf, size_t size)
   return 0;
 }
 
-static int _write(void* ctx, siera_ds_key_t key, const void* buf, size_t size)
+static int _write(void* ctx, siera_dsk_t key, const void* buf, size_t size)
 {
   (void)size;
   siera_esp32_ds_gpio_t* drv = (siera_esp32_ds_gpio_t*)ctx;

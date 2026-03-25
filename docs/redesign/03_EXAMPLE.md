@@ -75,8 +75,8 @@ static int gpio_write(void *ctx, siera_ds_key_t key,
 
 static const siera_ds_stream_api_t gpio_api = { gpio_read, gpio_write };
 static const gpio_pin_t gpio_pins[] = {
-    { SIERA_DS_KEY_LED_STATUS, 13, true  },
-    { SIERA_DS_KEY_BUTTON_SET,  2, false },
+    { DSK_LED_STATUS, 13, true  },
+    { DSK_BUTTON_SET,  2, false },
 };
 static gpio_ctx_t gpio_ctx = { gpio_pins, SIERA_NUM_ELEMENTS(gpio_pins) };
 static siera_ds_stream_t gpio_stream = { &gpio_api, &gpio_ctx };
@@ -100,8 +100,8 @@ static int adc_read(void *ctx, siera_ds_key_t key, void *buf, size_t size) {
 
 static const siera_ds_stream_api_t adc_api = { adc_read, NULL };
 static const adc_ch_t adc_channels[] = {
-    { SIERA_DS_KEY_BATTERY_MV,   0 },
-    { SIERA_DS_KEY_LIGHT_SENSOR, 1 },
+    { DSK_BATTERY_MV,   0 },
+    { DSK_LIGHT_SENSOR, 1 },
 };
 static adc_ctx_t adc_ctx = { adc_channels, SIERA_NUM_ELEMENTS(adc_channels) };
 static siera_ds_stream_t adc_stream = { &adc_api, &adc_ctx };
@@ -128,9 +128,9 @@ typedef struct {
 
 static void display_on_event(const siera_event_t *event, void *ctx) {
     switch ((siera_ds_key_t)event->id) {
-    case SIERA_DS_KEY_BRIGHTNESS:
+    case DSK_BRIGHTNESS:
         hal_uart_printf("[disp] brightness=%u\n", *(const uint8_t *)event->data); break;
-    case SIERA_DS_KEY_ALARM_FIRING:
+    case DSK_ALARM_FIRING:
         hal_uart_printf("[disp] firing=%d\n", *(const bool *)event->data); break;
     default: break;
     }
@@ -154,9 +154,9 @@ typedef struct {
 static void alarm_on_event(const siera_event_t *event, void *ctx) {
     alarm_module_t *mod = ctx;
     switch ((siera_ds_key_t)event->id) {
-    case SIERA_DS_KEY_ALARM_ENABLED: mod->armed = *(const bool *)event->data; break;
-    case SIERA_DS_KEY_ALARM_HOUR:    mod->hour = *(const uint8_t *)event->data; break;
-    case SIERA_DS_KEY_ALARM_MIN:     mod->min = *(const uint8_t *)event->data; break;
+    case DSK_ALARM_ENABLED: mod->armed = *(const bool *)event->data; break;
+    case DSK_ALARM_HOUR:    mod->hour = *(const uint8_t *)event->data; break;
+    case DSK_ALARM_MIN:     mod->min = *(const uint8_t *)event->data; break;
     default: break;
     }
 }
@@ -166,18 +166,18 @@ static void alarm_check_cb(void *ctx) {
     if (!mod->armed) return;
     uint8_t rtc_h = 6, rtc_m = 30;
     bool already;
-    siera_ds_read(mod->ds, SIERA_DS_KEY_ALARM_FIRING, &already);
+    siera_ds_read(mod->ds, DSK_ALARM_FIRING, &already);
     if (!already && rtc_h == mod->hour && rtc_m == mod->min) {
         bool fire = true;
-        siera_ds_write(mod->ds, SIERA_DS_KEY_ALARM_FIRING, &fire);
+        siera_ds_write(mod->ds, DSK_ALARM_FIRING, &fire);
     }
 }
 
 static void alarm_init(alarm_module_t *mod, siera_ds_t *ds) {
     mod->ds = ds;
-    siera_ds_read(ds, SIERA_DS_KEY_ALARM_ENABLED, &mod->armed);
-    siera_ds_read(ds, SIERA_DS_KEY_ALARM_HOUR,    &mod->hour);
-    siera_ds_read(ds, SIERA_DS_KEY_ALARM_MIN,     &mod->min);
+    siera_ds_read(ds, DSK_ALARM_ENABLED, &mod->armed);
+    siera_ds_read(ds, DSK_ALARM_HOUR,    &mod->hour);
+    siera_ds_read(ds, DSK_ALARM_MIN,     &mod->min);
     siera_event_sub_init(&mod->sub, alarm_on_event, mod);
     siera_event_subscribe(ds->events, &mod->sub);
     siera_timer_init(&mod->check_timer, alarm_check_cb, mod);
@@ -190,10 +190,10 @@ typedef struct { siera_ds_t *ds; siera_timer_t poll_timer; bool last_btn; } inpu
 
 static void input_poll_cb(void *ctx) {
     input_module_t *mod = ctx;
-    bool btn; siera_ds_read(mod->ds, SIERA_DS_KEY_BUTTON_SET, &btn);
+    bool btn; siera_ds_read(mod->ds, DSK_BUTTON_SET, &btn);
     if (btn && !mod->last_btn) {
-        bool firing; siera_ds_read(mod->ds, SIERA_DS_KEY_ALARM_FIRING, &firing);
-        if (firing) { bool d = false; siera_ds_write(mod->ds, SIERA_DS_KEY_ALARM_FIRING, &d); }
+        bool firing; siera_ds_read(mod->ds, DSK_ALARM_FIRING, &firing);
+        if (firing) { bool d = false; siera_ds_write(mod->ds, DSK_ALARM_FIRING, &d); }
     }
     mod->last_btn = btn;
 }
@@ -210,9 +210,9 @@ typedef struct { siera_ds_t *ds; siera_timer_t sample_timer; } sensor_module_t;
 
 static void sensor_sample_cb(void *ctx) {
     sensor_module_t *mod = ctx;
-    uint16_t light; siera_ds_read(mod->ds, SIERA_DS_KEY_LIGHT_SENSOR, &light);
+    uint16_t light; siera_ds_read(mod->ds, DSK_LIGHT_SENSOR, &light);
     uint8_t brightness = (light > 2000) ? 255 : (uint8_t)(light / 8);
-    siera_ds_write(mod->ds, SIERA_DS_KEY_BRIGHTNESS, &brightness);
+    siera_ds_write(mod->ds, DSK_BRIGHTNESS, &brightness);
 }
 
 static void sensor_init(sensor_module_t *mod, siera_ds_t *ds) {
@@ -263,10 +263,10 @@ int main(void) {
 
     uint8_t hour = 6, min = 30;
     bool arm = true, led = true;
-    siera_ds_write(&g_ds, SIERA_DS_KEY_ALARM_HOUR, &hour);
-    siera_ds_write(&g_ds, SIERA_DS_KEY_ALARM_MIN, &min);
-    siera_ds_write(&g_ds, SIERA_DS_KEY_ALARM_ENABLED, &arm);
-    siera_ds_write(&g_ds, SIERA_DS_KEY_LED_STATUS, &led);
+    siera_ds_write(&g_ds, DSK_ALARM_HOUR, &hour);
+    siera_ds_write(&g_ds, DSK_ALARM_MIN, &min);
+    siera_ds_write(&g_ds, DSK_ALARM_ENABLED, &arm);
+    siera_ds_write(&g_ds, DSK_LED_STATUS, &led);
 
     hal_uart_printf("=== running ===\n");
 

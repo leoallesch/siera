@@ -2,7 +2,7 @@
 #define SIERA_SIM_H
 
 #include "lvgl.h"
-#include "siera/ds_key.h"
+#include "siera/dsk.h"
 #include "siera/ds_stream.h"
 #include "siera/event.h"
 #include "siera/sim_display.h"
@@ -18,12 +18,12 @@ typedef enum {
 } siera_sim_input_type_t;
 
 typedef struct {
-  siera_ds_key_t key;
+  siera_dsk_t key;
   siera_sim_input_type_t type;
 } siera_sim_input_t;
 
 typedef struct {
-  siera_ds_key_t key;
+  siera_dsk_t key;
   const void*    val;
   size_t         size;
 } siera_sim_input_event_t;
@@ -40,7 +40,7 @@ typedef struct siera_sim_t siera_sim_t;
 
 typedef struct {
   siera_sim_t*           sim;
-  siera_ds_key_t         key;
+  siera_dsk_t         key;
   siera_sim_input_type_t type;
   bool                   bool_val;
   uint16_t               uint16_val;
