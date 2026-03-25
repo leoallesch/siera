@@ -8,7 +8,7 @@
 #include "siera/sim_display.h"
 
 #ifndef SIERA_SIM_MAX_INPUTS
-#define SIERA_SIM_MAX_INPUTS 16
+#define SIERA_SIM_MAX_INPUTS 32
 #endif
 
 typedef enum {

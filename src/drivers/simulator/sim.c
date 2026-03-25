@@ -1,6 +1,6 @@
+#include "siera/ds.h"
 #include "siera/sim.h"
 #include "sim_ui.h"
-#include "siera/ds.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -78,22 +78,25 @@ void siera_sim_init(siera_sim_t* self, const siera_sim_config_t* cfg)
 {
   self->gpio_stream.api = &gpio_api;
   self->gpio_stream.ctx = self;
-  self->adc_stream.api  = &adc_api;
-  self->adc_stream.ctx  = self;
+  self->adc_stream.api = &adc_api;
+  self->adc_stream.ctx = self;
 
   siera_event_init(&self->input_event);
 
   for(uint8_t i = 0; i < cfg->input_count; i++) {
-    self->input_ctx[i].sim        = self;
-    self->input_ctx[i].key        = cfg->inputs[i].key;
-    self->input_ctx[i].type       = cfg->inputs[i].type;
-    self->input_ctx[i].bool_val   = false;
+    self->input_ctx[i].sim = self;
+    self->input_ctx[i].key = cfg->inputs[i].key;
+    self->input_ctx[i].type = cfg->inputs[i].type;
+    self->input_ctx[i].bool_val = false;
     self->input_ctx[i].uint16_val = 0;
   }
   self->input_count = cfg->input_count;
 
+  int panel_width = sim_ui_panel_width(cfg->input_count);
+  int window_width = cfg->app_width > panel_width ? cfg->app_width : panel_width;
+
   self->display = lv_sdl_window_create(
-    cfg->app_width + SIM_WINDOW_PADDING,
+    window_width + SIM_WINDOW_PADDING,
     cfg->app_height + SIM_WINDOW_PADDING);
   self->mouse = lv_sdl_mouse_create();
 
@@ -111,7 +114,7 @@ void siera_sim_init(siera_sim_t* self, const siera_sim_config_t* cfg)
   int panel_height = lv_obj_get_height(input_panel);
   lv_display_set_resolution(
     self->display,
-    cfg->app_width + SIM_WINDOW_PADDING,
+    window_width + SIM_WINDOW_PADDING,
     cfg->app_height + panel_height + SIM_WINDOW_PADDING);
 
   lv_screen_load(screen);

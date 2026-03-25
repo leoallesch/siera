@@ -3,6 +3,8 @@
 #include "lvgl.h"
 #include "siera/sim.h"
 
+int sim_ui_panel_width(uint8_t input_count);
+
 lv_obj_t* sim_ui_create_screen(
   int                      app_width,
   int                      app_height,

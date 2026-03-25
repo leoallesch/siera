@@ -1,7 +1,7 @@
 #include "siera/ds.h"
 #include "sim_ui.h"
 
-#define GRID_COLUMNS 4
+#define GRID_COLUMNS 6
 
 #define COLOR_BG 0x16161e
 #define COLOR_SURFACE 0x1e1e2a
@@ -11,6 +11,22 @@
 #define COLOR_ACCENT 0x5B8AF0
 #define COLOR_TEXT 0xd4d4e8
 #define COLOR_TEXT_DIM 0x6868a0
+
+/* -------------------------------------------------------------------------
+ * Public geometry helper
+ * -------------------------------------------------------------------------*/
+
+#define SIM_PANEL_PAD_HOR  40  /* pad_all=20 on each side */
+#define SIM_PANEL_PAD_COL  10
+#define SIM_CELL_MIN_WIDTH 90
+
+int sim_ui_panel_width(uint8_t input_count)
+{
+  int cols = input_count < GRID_COLUMNS ? input_count : GRID_COLUMNS;
+  if(cols == 0)
+    return 0;
+  return cols * SIM_CELL_MIN_WIDTH + (cols - 1) * SIM_PANEL_PAD_COL + SIM_PANEL_PAD_HOR;
+}
 
 /* -------------------------------------------------------------------------
  * Input widgets
