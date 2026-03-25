@@ -1,39 +1,119 @@
 #include "siera/sim.h"
+#include "siera/ds.h"
+
+#include <stddef.h>
+#include <stdint.h>
 
 #define GRID_COLUMNS 4
 
-#define COLOR_BG         0x16161e
-#define COLOR_SURFACE    0x1e1e2a
-#define COLOR_SURFACE2   0x16161e
-#define COLOR_BORDER     0x2e2e42
+#define COLOR_BG 0x16161e
+#define COLOR_SURFACE 0x1e1e2a
+#define COLOR_SURFACE2 0x16161e
+#define COLOR_BORDER 0x2e2e42
 #define COLOR_BORDER_DIM 0x252535
-#define COLOR_ACCENT     0x5B8AF0
-#define COLOR_TEXT       0xd4d4e8
-#define COLOR_TEXT_DIM   0x6868a0
+#define COLOR_ACCENT 0x5B8AF0
+#define COLOR_TEXT 0xd4d4e8
+#define COLOR_TEXT_DIM 0x6868a0
+
+/* -------------------------------------------------------------------------
+ * Stream API — GPIO
+ * -------------------------------------------------------------------------*/
+
+static siera_sim_input_ctx_t* find_ctx(siera_sim_t* sim, siera_ds_key_t key)
+{
+  for(uint8_t i = 0; i < SIERA_SIM_MAX_INPUTS; i++) {
+    if(sim->input_ctx[i].sim && sim->input_ctx[i].key == key)
+      return &sim->input_ctx[i];
+  }
+  return NULL;
+}
+
+static int gpio_read(void* ctx, siera_ds_key_t key, void* buf, size_t size)
+{
+  (void)size;
+  siera_sim_t* sim = (siera_sim_t*)ctx;
+  siera_sim_input_ctx_t* entry = find_ctx(sim, key);
+  if(!entry)
+    return -1;
+  *(bool*)buf = entry->bool_val;
+  return 0;
+}
+
+static int gpio_write(void* ctx, siera_ds_key_t key, const void* buf, size_t size)
+{
+  (void)size;
+  siera_sim_t* sim = (siera_sim_t*)ctx;
+  siera_sim_input_ctx_t* entry = find_ctx(sim, key);
+  if(!entry)
+    return -1;
+  entry->bool_val = *(const bool*)buf;
+  return 0;
+}
+
+static const siera_ds_stream_api_t gpio_api = { gpio_read, gpio_write };
+
+/* -------------------------------------------------------------------------
+ * Stream API — ADC
+ * -------------------------------------------------------------------------*/
+
+static int adc_read(void* ctx, siera_ds_key_t key, void* buf, size_t size)
+{
+  (void)size;
+  siera_sim_t* sim = (siera_sim_t*)ctx;
+  siera_sim_input_ctx_t* entry = find_ctx(sim, key);
+  if(!entry)
+    return -1;
+  *(uint16_t*)buf = entry->uint16_val;
+  return 0;
+}
+
+static int adc_write(void* ctx, siera_ds_key_t key, const void* buf, size_t size)
+{
+  (void)ctx;
+  (void)key;
+  (void)buf;
+  (void)size;
+  return -1; /* ADC is read-only */
+}
+
+static const siera_ds_stream_api_t adc_api = { adc_read, adc_write };
+
+/* -------------------------------------------------------------------------
+ * LVGL event handlers
+ * -------------------------------------------------------------------------*/
+
+static void sim_publish(siera_sim_input_ctx_t* ctx, const void* val, size_t size)
+{
+  siera_sim_input_event_t ev = { .key = ctx->key, .val = val, .size = size };
+  siera_event_publish(&ctx->sim->input_event, &ev);
+}
 
 static void on_button_event(lv_event_t* e)
 {
   siera_sim_input_ctx_t* ctx = lv_event_get_user_data(e);
-  bool pressed = (lv_event_get_code(e) == LV_EVENT_PRESSED);
-  siera_ds_write(ctx->ds, ctx->key, &pressed);
+  ctx->bool_val = (lv_event_get_code(e) == LV_EVENT_PRESSED);
+  sim_publish(ctx, &ctx->bool_val, sizeof(ctx->bool_val));
 }
 
 static void on_switch_event(lv_event_t* e)
 {
   siera_sim_input_ctx_t* ctx = lv_event_get_user_data(e);
   lv_obj_t* sw = lv_event_get_target(e);
-  bool checked = lv_obj_has_state(sw, LV_STATE_CHECKED);
-  siera_ds_write(ctx->ds, ctx->key, &checked);
+  ctx->bool_val = lv_obj_has_state(sw, LV_STATE_CHECKED);
+  sim_publish(ctx, &ctx->bool_val, sizeof(ctx->bool_val));
 }
 
 static void on_slider_event(lv_event_t* e)
 {
   siera_sim_input_ctx_t* ctx = lv_event_get_user_data(e);
   lv_obj_t* slider = lv_event_get_target(e);
-  int32_t val = lv_slider_get_value(slider);
-  uint16_t value = (uint16_t)val;
-  siera_ds_write(ctx->ds, ctx->key, &value);
+  ctx->uint16_val = (uint16_t)lv_slider_get_value(slider);
+  sim_publish(ctx, &ctx->uint16_val, sizeof(ctx->uint16_val));
 }
+
+/* -------------------------------------------------------------------------
+ * LVGL UI construction (unchanged layout)
+ * -------------------------------------------------------------------------*/
 
 static lv_obj_t* create_input_widget(
   lv_obj_t* parent,
@@ -187,22 +267,33 @@ static lv_obj_t* create_screen(
   return screen;
 }
 
-void siera_sim_init(
-  siera_sim_t*              self,
-  const siera_sim_config_t* cfg,
-  siera_ds_t*               ds)
+/* -------------------------------------------------------------------------
+ * Public API
+ * -------------------------------------------------------------------------*/
+
+void siera_sim_init(siera_sim_t* self, const siera_sim_config_t* cfg)
 {
-  self->ds = ds;
+  /* Init stream APIs */
+  self->gpio_stream.api = &gpio_api;
+  self->gpio_stream.ctx = self;
+  self->adc_stream.api = &adc_api;
+  self->adc_stream.ctx = self;
+
+  siera_event_init(&self->input_event);
 
   for(uint8_t i = 0; i < cfg->input_count; i++) {
-    self->input_ctx[i].ds  = ds;
-    self->input_ctx[i].key = cfg->inputs[i].key;
+    self->input_ctx[i].sim        = self;
+    self->input_ctx[i].key        = cfg->inputs[i].key;
+    self->input_ctx[i].type       = cfg->inputs[i].type;
+    self->input_ctx[i].bool_val   = false;
+    self->input_ctx[i].uint16_val = 0;
   }
+  self->input_count = cfg->input_count;
 
   int padding = 24;
 
   self->display = lv_sdl_window_create(cfg->app_width + padding, cfg->app_height + padding);
-  self->mouse   = lv_sdl_mouse_create();
+  self->mouse = lv_sdl_mouse_create();
 
   lv_obj_t* input_panel;
   lv_obj_t* screen = create_screen(
@@ -229,4 +320,15 @@ void siera_sim_init(
 siera_hal_display_t* siera_sim_get_display(siera_sim_t* self)
 {
   return &self->sim_display.interface;
+}
+
+siera_ds_stream_t* siera_sim_get_gpio_stream(siera_sim_t* self)
+{
+  return &self->gpio_stream;
+}
+
+
+siera_ds_stream_t* siera_sim_get_adc_stream(siera_sim_t* self)
+{
+  return &self->adc_stream;
 }

@@ -27,8 +27,6 @@
     KEY(_DUMMY, uint8_t, SIERA_DS_RAM, 0, SIERA_DS_NONE)
 #endif
 
-typedef uint16_t siera_ds_key_t;
-
 enum {
 #define _DS_KEY_ENUM(name, type, st, dv, fl) SIERA_DS_KEY_##name,
     SIERA_DS_KEYS(_DS_KEY_ENUM)

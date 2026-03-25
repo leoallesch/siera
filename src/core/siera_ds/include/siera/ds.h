@@ -9,8 +9,8 @@
 #include "siera/timer.h"
 
 typedef struct {
-  siera_ds_key_t  key;
-  const void     *data;
+  siera_ds_key_t key;
+  const void* data;
 } siera_ds_on_change_t;
 
 typedef struct {
@@ -40,10 +40,10 @@ typedef struct {
 } siera_ds_t;
 
 int siera_ds_init(siera_ds_t* ds,
-                  const siera_ds_stream_binding_t* streams,
-                  size_t stream_count,
-                  siera_timer_mgr_t* timers,
-                  uint32_t flush_interval_ms);
+  const siera_ds_stream_binding_t* streams,
+  size_t stream_count,
+  siera_timer_mgr_t* timers,
+  uint32_t flush_interval_ms);
 int siera_ds_read(const siera_ds_t* ds, siera_ds_key_t key, void* out);
 int siera_ds_write(siera_ds_t* ds, siera_ds_key_t key, const void* in);
 void siera_ds_deinit(siera_ds_t* ds);
