@@ -1,5 +1,5 @@
 #include "siera/sim.h"
-#include "sim_ui.h"
+#include "siera/sim_ui.h"
 
 #include <stddef.h>
 #include <stdint.h>

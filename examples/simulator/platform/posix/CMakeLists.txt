@@ -1,6 +1,6 @@
-add_executable(multi_target main.c)
-target_link_libraries(multi_target PRIVATE multi_target::app siera)
-target_include_directories(multi_target PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+add_executable(simulator main.c)
+target_link_libraries(simulator PRIVATE simulator::app siera)
+target_include_directories(simulator PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_compile_options(multi_target PRIVATE -Wall -Wextra -g)
-set_target_properties(multi_target PROPERTIES C_STANDARD 11)
+target_compile_options(simulator PRIVATE -Wall -Wextra -g)
+set_target_properties(simulator PROPERTIES C_STANDARD 11)

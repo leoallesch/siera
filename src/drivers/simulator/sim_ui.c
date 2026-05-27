@@ -1,5 +1,5 @@
 #include "siera/ds.h"
-#include "sim_ui.h"
+#include "siera/sim_ui.h"
 
 #define GRID_COLUMNS 6
 
@@ -17,8 +17,8 @@
  * Public geometry helper
  * -------------------------------------------------------------------------*/
 
-#define SIM_PANEL_PAD_HOR  40  /* pad_all=20 on each side */
-#define SIM_PANEL_PAD_COL  10
+#define SIM_PANEL_PAD_HOR 40 /* pad_all=20 on each side */
+#define SIM_PANEL_PAD_COL 10
 #define SIM_CELL_MIN_WIDTH 90
 
 int sim_ui_panel_width(uint8_t widget_count)
@@ -223,13 +223,13 @@ static lv_obj_t* create_content_area(lv_obj_t* parent, int width, int height)
  * -------------------------------------------------------------------------*/
 
 lv_obj_t* sim_ui_create_screen(
-  int                       app_width,
-  int                       app_height,
+  int app_width,
+  int app_height,
   const siera_sim_widget_t* widgets,
-  uint8_t                   widget_count,
-  siera_sim_ds_io_t*        io,
-  lv_obj_t**                out_content_area,
-  lv_obj_t**                out_input_panel)
+  uint8_t widget_count,
+  siera_sim_ds_io_t* io,
+  lv_obj_t** out_content_area,
+  lv_obj_t** out_input_panel)
 {
   lv_obj_t* screen = lv_obj_create(NULL);
   lv_obj_set_style_bg_color(screen, lv_color_hex(COLOR_BG), 0);

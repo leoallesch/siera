@@ -66,7 +66,7 @@ int main(void)
     SIERA_DS_KEYS(EXPAND_AS_CONFIG)
   };
   static ds_storage_t ds_storage;
-  
+
   siera_timer_mgr_t timers;
   siera_ds_ram_t ram_ds;
   siera_ds_composite_t ds_composite;
