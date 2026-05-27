@@ -1,6 +1,7 @@
 siera_add_module(
     SRCS     sim_timesource.c
              sim_rtc.c
+             ds/sim_ds_nvs.c
     INCLUDES include
 )
 
@@ -12,6 +13,7 @@ if(TARGET lvgl)
         ${CMAKE_CURRENT_SOURCE_DIR}/sim.c
         ${CMAKE_CURRENT_SOURCE_DIR}/sim_ui.c
         ${CMAKE_CURRENT_SOURCE_DIR}/sim_display.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/ds/sim_ds_io.c
     )
     target_link_libraries(siera INTERFACE lvgl ${SDL2_LIBRARIES})
     target_include_directories(siera INTERFACE ${SDL2_INCLUDE_DIRS})

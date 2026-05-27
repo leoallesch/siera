@@ -85,31 +85,35 @@ static void state_counting(siera_fsm_t* fsm, siera_fsm_signal_t signal, const vo
   (void)data;
   app_presenter_t* p = p_from_fsm(fsm);
 
-  static const siera_dsk_t btn_keys[] = {
-    DSK_BTN_PAUSE,
-    DSK_BTN_RESET,
-  };
-
   switch(signal) {
-    case SIERA_FSM_SIGNAL_ENTER:
-      siera_ds_write(p->ds, DSK_CURRENT_VIEW, &p->counter_view.base);
-      siera_key_manager_init(
-        &p->key_mgr, p->ds, p->timers, DSK_KEY_EVENT, 500, btn_keys, SIERA_NUM_ELEMENTS(btn_keys));
-      siera_event_sub_init(&p->ds_sub, on_ds_change, p);
-      siera_ds_subscribe_all(p->ds, &p->ds_sub);
+    case SIERA_FSM_SIGNAL_ENTER: {
+      siera_view_t* view = &p->counter_view.base;
+      siera_ds_write(p->ds, DSK_CURRENT_VIEW, &view);
+
+      uint32_t counter;
+      siera_ds_read(p->ds, DSK_COUNTER, &counter);
+      counter_view_update(&p->counter_view, counter);
+
       siera_timer_start(p->timers, &p->tick_timer, on_tick, p, 500, true);
       break;
+    }
 
-    case SIERA_FSM_SIGNAL_EXIT:
+    case SIERA_FSM_SIGNAL_EXIT: {
+      siera_view_t* null_view = NULL;
       siera_timer_stop(p->timers, &p->tick_timer);
-      siera_ds_unsubscribe_all(p->ds, &p->ds_sub);
-      siera_ds_write(p->ds, DSK_CURRENT_VIEW, NULL);
+      siera_ds_write(p->ds, DSK_CURRENT_VIEW, &null_view);
       break;
+    }
 
     default:
       break;
   }
 }
+
+static const siera_dsk_t btn_keys[] = {
+  DSK_BTN_PAUSE,
+  DSK_BTN_RESET,
+};
 
 /* ── Public init ─────────────────────────────────────────────────────────── */
 
@@ -121,6 +125,12 @@ void app_init(i_siera_ds_t* ds, siera_timer_mgr_t* timers, siera_hal_display_t* 
 
   counter_view_init(&g_presenter.counter_view);
   siera_view_mgr_init(&g_presenter.view_mgr, ds, display, DSK_CURRENT_VIEW);
+
+  siera_key_manager_init(
+    &g_presenter.key_mgr, g_presenter.ds, g_presenter.timers, DSK_KEY_EVENT, 500, btn_keys, SIERA_NUM_ELEMENTS(btn_keys));
+
+  siera_event_sub_init(&g_presenter.ds_sub, on_ds_change, &g_presenter);
+  siera_ds_subscribe_all(g_presenter.ds, &g_presenter.ds_sub);
 
   siera_fsm_init(&g_presenter.fsm, state_counting);
 }

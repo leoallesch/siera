@@ -4,39 +4,40 @@
 #include "siera/ds.h"
 
 /*
- * NVS datastream stream for siera_ds on the host simulator.
+ * File-backed NVS datastream for the host simulator.
  *
- * Implements SIERA_DS_NVS via a file-backed key-value store.
- * Keys are stored as "k<index>" strings; values are raw blobs.
- * The backing file is loaded on init and flushed on every write.
+ * Implements i_siera_ds_t with variable-size blobs persisted to disk.
  *
  * Usage:
- *   static siera_sim_ds_nvs_t nvs_stream;
- *   siera_sim_ds_nvs_init(&nvs_stream, "siera_nvs.bin");
- *
- *   siera_ds_stream_binding_t bindings[] = {
- *     { SIERA_DS_NVS, &nvs_stream.interface },
- *   };
+ *   static siera_sim_ds_nvs_t nvs;
+ *   siera_sim_ds_nvs_init(&nvs, "siera_nvs.bin");
+ *   siera_sim_ds_nvs_register(&nvs, DSK_BRIGHTNESS, sizeof(uint8_t));
+ *   siera_sim_ds_nvs_register(&nvs, DSK_ALARM_HOUR, sizeof(uint8_t));
+ *   ...
+ *   siera_ds_write(&nvs.interface, DSK_BRIGHTNESS, &val);
  */
 
-#define SIERA_SIM_DS_NVS_MAX_ENTRIES 64
-#define SIERA_SIM_DS_NVS_MAX_KEY_LEN 15
-#define SIERA_SIM_DS_NVS_MAX_VALUE_SIZE 128
-
 typedef struct {
-  char key[SIERA_SIM_DS_NVS_MAX_KEY_LEN + 1];
-  uint8_t data[SIERA_SIM_DS_NVS_MAX_VALUE_SIZE];
-  uint8_t size;
+  siera_dsk_t key;
+  uint16_t size;
+  void* data; /* heap, length = size */
 } siera_sim_ds_nvs_entry_t;
 
 typedef struct {
   i_siera_ds_t interface;
   siera_event_t on_change;
   const char* filepath;
-  siera_sim_ds_nvs_entry_t entries[SIERA_SIM_DS_NVS_MAX_ENTRIES];
-  uint8_t count;
+  siera_sim_ds_nvs_entry_t* entries; /* heap, length = count */
+  uint16_t count;
+  uint16_t capacity;
 } siera_sim_ds_nvs_t;
 
 void siera_sim_ds_nvs_init(siera_sim_ds_nvs_t* self, const char* filepath);
+void siera_sim_ds_nvs_deinit(siera_sim_ds_nvs_t* self);
+
+/* Declare a key with its blob size. Required before first write of a new key.
+   Idempotent: re-registering the same key with the same size is a no-op;
+   re-registering with a different size resets the blob. */
+void siera_sim_ds_nvs_register(siera_sim_ds_nvs_t* self, siera_dsk_t key, uint16_t size);
 
 #endif /* SIERA_SIM_DS_NVS_H */

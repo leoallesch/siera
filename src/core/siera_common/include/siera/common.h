@@ -16,4 +16,6 @@
 #define SIERA_CONCAT_(a, b) a##b
 #define SIERA_CONCAT(a, b)  SIERA_CONCAT_(a, b)
 
+#define COMMA ,
+
 #endif

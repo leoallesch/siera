@@ -4,7 +4,7 @@ set(_siera_root ${CMAKE_CURRENT_SOURCE_DIR}/../../)
 
 include(${_siera_root}/cmake/SieraPlatform.cmake)
 
-project(multi_target C CXX)
+project(simulator C CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 

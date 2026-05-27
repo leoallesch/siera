@@ -9,6 +9,7 @@
 #define COLOR_BORDER 0x2e2e42
 #define COLOR_BORDER_DIM 0x252535
 #define COLOR_ACCENT 0x5B8AF0
+#define COLOR_LED_ON 0xff5e6c
 #define COLOR_TEXT 0xd4d4e8
 #define COLOR_TEXT_DIM 0x6868a0
 
@@ -20,55 +21,58 @@
 #define SIM_PANEL_PAD_COL  10
 #define SIM_CELL_MIN_WIDTH 90
 
-int sim_ui_panel_width(uint8_t input_count)
+int sim_ui_panel_width(uint8_t widget_count)
 {
-  int cols = input_count < GRID_COLUMNS ? input_count : GRID_COLUMNS;
+  int cols = widget_count < GRID_COLUMNS ? widget_count : GRID_COLUMNS;
   if(cols == 0)
     return 0;
   return cols * SIM_CELL_MIN_WIDTH + (cols - 1) * SIM_PANEL_PAD_COL + SIM_PANEL_PAD_HOR;
 }
 
 /* -------------------------------------------------------------------------
- * Input widgets
+ * Input → ds writes
  * -------------------------------------------------------------------------*/
 
-static void on_button_event(lv_event_t* e);
-static void on_switch_event(lv_event_t* e);
-static void on_slider_event(lv_event_t* e);
-
-static void sim_publish(siera_sim_input_ctx_t* ctx, const void* val, size_t size)
+static void write_bool(siera_sim_widget_ctx_t* ctx, bool v)
 {
-  siera_sim_input_event_t ev = { .key = ctx->key, .val = val, .size = size };
-  siera_event_publish(&ctx->sim->input_event, &ev);
+  siera_ds_write(&ctx->owner->interface, ctx->key, &v);
+}
+
+static void write_u16(siera_sim_widget_ctx_t* ctx, uint16_t v)
+{
+  siera_ds_write(&ctx->owner->interface, ctx->key, &v);
 }
 
 static void on_button_event(lv_event_t* e)
 {
-  siera_sim_input_ctx_t* ctx = lv_event_get_user_data(e);
+  siera_sim_widget_ctx_t* ctx = lv_event_get_user_data(e);
   bool val = (lv_event_get_code(e) == LV_EVENT_PRESSED);
-  sim_publish(ctx, &val, sizeof(val));
+  write_bool(ctx, val);
 }
 
 static void on_switch_event(lv_event_t* e)
 {
-  siera_sim_input_ctx_t* ctx = lv_event_get_user_data(e);
+  siera_sim_widget_ctx_t* ctx = lv_event_get_user_data(e);
   lv_obj_t* sw = lv_event_get_target(e);
   bool val = lv_obj_has_state(sw, LV_STATE_CHECKED);
-  sim_publish(ctx, &val, sizeof(val));
+  write_bool(ctx, val);
 }
 
 static void on_slider_event(lv_event_t* e)
 {
-  siera_sim_input_ctx_t* ctx = lv_event_get_user_data(e);
+  siera_sim_widget_ctx_t* ctx = lv_event_get_user_data(e);
   lv_obj_t* slider = lv_event_get_target(e);
-  ctx->uint16_val = (uint16_t)lv_slider_get_value(slider);
-  sim_publish(ctx, &ctx->uint16_val, sizeof(ctx->uint16_val));
+  write_u16(ctx, (uint16_t)lv_slider_get_value(slider));
 }
 
-static lv_obj_t* create_input_widget(
+/* -------------------------------------------------------------------------
+ * Widget cell construction
+ * -------------------------------------------------------------------------*/
+
+static lv_obj_t* create_widget(
   lv_obj_t* parent,
-  const siera_sim_input_t* cfg,
-  void* ctx)
+  const siera_sim_widget_t* cfg,
+  siera_sim_widget_ctx_t* ctx)
 {
   lv_obj_t* cell = lv_obj_create(parent);
   lv_obj_set_scrollbar_mode(cell, LV_SCROLLBAR_MODE_OFF);
@@ -86,54 +90,76 @@ static lv_obj_t* create_input_widget(
   lv_obj_set_style_pad_row(cell, 10, 0);
 
   lv_obj_t* label = lv_label_create(cell);
-  lv_label_set_text(label, "REPLACE ME");
+  lv_label_set_text(label, cfg->label ? cfg->label : "");
   lv_obj_set_style_text_color(label, lv_color_hex(COLOR_TEXT_DIM), 0);
   lv_obj_set_style_text_font(label, &lv_font_montserrat_12, 0);
 
+  lv_obj_t* widget = NULL;
+
   switch(cfg->type) {
-    case SIERA_SIM_INPUT_BUTTON: {
-      lv_obj_t* btn = lv_button_create(cell);
-      lv_obj_set_style_bg_color(btn, lv_color_hex(COLOR_SURFACE), 0);
-      lv_obj_set_style_bg_opa(btn, LV_OPA_COVER, 0);
-      lv_obj_set_style_border_width(btn, 1, 0);
-      lv_obj_set_style_border_color(btn, lv_color_hex(COLOR_BORDER), 0);
-      lv_obj_set_style_radius(btn, 6, 0);
-      lv_obj_set_style_pad_ver(btn, 6, 0);
-      lv_obj_set_style_pad_hor(btn, 14, 0);
-      lv_obj_set_style_bg_color(btn, lv_color_hex(COLOR_ACCENT), LV_STATE_PRESSED);
-      lv_obj_set_style_border_color(btn, lv_color_hex(COLOR_ACCENT), LV_STATE_PRESSED);
-      lv_obj_t* btn_label = lv_label_create(btn);
+    case SIERA_SIM_WIDGET_BUTTON: {
+      widget = lv_button_create(cell);
+      lv_obj_set_style_bg_color(widget, lv_color_hex(COLOR_SURFACE), 0);
+      lv_obj_set_style_bg_opa(widget, LV_OPA_COVER, 0);
+      lv_obj_set_style_border_width(widget, 1, 0);
+      lv_obj_set_style_border_color(widget, lv_color_hex(COLOR_BORDER), 0);
+      lv_obj_set_style_radius(widget, 6, 0);
+      lv_obj_set_style_pad_ver(widget, 6, 0);
+      lv_obj_set_style_pad_hor(widget, 14, 0);
+      lv_obj_set_style_bg_color(widget, lv_color_hex(COLOR_ACCENT), LV_STATE_PRESSED);
+      lv_obj_set_style_border_color(widget, lv_color_hex(COLOR_ACCENT), LV_STATE_PRESSED);
+      lv_obj_t* btn_label = lv_label_create(widget);
       lv_label_set_text(btn_label, "press");
       lv_obj_set_style_text_color(btn_label, lv_color_hex(COLOR_TEXT), 0);
       lv_obj_set_style_text_color(btn_label, lv_color_hex(0xffffff), LV_STATE_PRESSED);
       lv_obj_set_style_text_font(btn_label, &lv_font_montserrat_12, 0);
-      lv_obj_add_event_cb(btn, on_button_event, LV_EVENT_PRESSED, ctx);
-      lv_obj_add_event_cb(btn, on_button_event, LV_EVENT_RELEASED, ctx);
+      lv_obj_add_event_cb(widget, on_button_event, LV_EVENT_PRESSED, ctx);
+      lv_obj_add_event_cb(widget, on_button_event, LV_EVENT_RELEASED, ctx);
       break;
     }
-    case SIERA_SIM_INPUT_SWITCH: {
-      lv_obj_t* sw = lv_switch_create(cell);
-      lv_obj_set_style_bg_color(sw, lv_color_hex(COLOR_BORDER), LV_PART_MAIN);
-      lv_obj_set_style_bg_opa(sw, LV_OPA_COVER, LV_PART_MAIN);
+    case SIERA_SIM_WIDGET_SWITCH: {
+      widget = lv_switch_create(cell);
+      lv_obj_set_style_bg_color(widget, lv_color_hex(COLOR_BORDER), LV_PART_MAIN);
+      lv_obj_set_style_bg_opa(widget, LV_OPA_COVER, LV_PART_MAIN);
       lv_obj_set_style_bg_color(
-        sw, lv_color_hex(COLOR_ACCENT), LV_PART_INDICATOR | LV_STATE_CHECKED);
-      lv_obj_set_style_bg_color(sw, lv_color_hex(0xffffff), LV_PART_KNOB);
-      lv_obj_add_event_cb(sw, on_switch_event, LV_EVENT_VALUE_CHANGED, ctx);
+        widget, lv_color_hex(COLOR_ACCENT), LV_PART_INDICATOR | LV_STATE_CHECKED);
+      lv_obj_set_style_bg_color(widget, lv_color_hex(0xffffff), LV_PART_KNOB);
+      lv_obj_add_event_cb(widget, on_switch_event, LV_EVENT_VALUE_CHANGED, ctx);
       break;
     }
-    case SIERA_SIM_INPUT_SLIDER: {
-      lv_obj_t* slider = lv_slider_create(cell);
-      lv_obj_set_width(slider, lv_pct(90));
-      lv_obj_set_style_bg_color(slider, lv_color_hex(COLOR_BORDER), LV_PART_MAIN);
-      lv_obj_set_style_bg_opa(slider, LV_OPA_COVER, LV_PART_MAIN);
-      lv_obj_set_style_bg_color(slider, lv_color_hex(COLOR_ACCENT), LV_PART_INDICATOR);
-      lv_obj_set_style_bg_color(slider, lv_color_hex(0xffffff), LV_PART_KNOB);
-      lv_obj_set_style_border_color(slider, lv_color_hex(COLOR_ACCENT), LV_PART_KNOB);
-      lv_obj_set_style_border_width(slider, 2, LV_PART_KNOB);
-      lv_obj_add_event_cb(slider, on_slider_event, LV_EVENT_VALUE_CHANGED, ctx);
+    case SIERA_SIM_WIDGET_SLIDER: {
+      widget = lv_slider_create(cell);
+      lv_obj_set_width(widget, lv_pct(90));
+      lv_obj_set_style_bg_color(widget, lv_color_hex(COLOR_BORDER), LV_PART_MAIN);
+      lv_obj_set_style_bg_opa(widget, LV_OPA_COVER, LV_PART_MAIN);
+      lv_obj_set_style_bg_color(widget, lv_color_hex(COLOR_ACCENT), LV_PART_INDICATOR);
+      lv_obj_set_style_bg_color(widget, lv_color_hex(0xffffff), LV_PART_KNOB);
+      lv_obj_set_style_border_color(widget, lv_color_hex(COLOR_ACCENT), LV_PART_KNOB);
+      lv_obj_set_style_border_width(widget, 2, LV_PART_KNOB);
+      lv_obj_add_event_cb(widget, on_slider_event, LV_EVENT_VALUE_CHANGED, ctx);
+      break;
+    }
+    case SIERA_SIM_WIDGET_LED: {
+      widget = lv_obj_create(cell);
+      lv_obj_remove_style_all(widget);
+      lv_obj_set_size(widget, 24, 24);
+      lv_obj_set_style_radius(widget, LV_RADIUS_CIRCLE, 0);
+      lv_obj_set_style_bg_opa(widget, LV_OPA_COVER, 0);
+      lv_obj_set_style_bg_color(widget, lv_color_hex(COLOR_BORDER), 0);
+      lv_obj_set_style_border_width(widget, 1, 0);
+      lv_obj_set_style_border_color(widget, lv_color_hex(COLOR_BORDER), 0);
+      break;
+    }
+    case SIERA_SIM_WIDGET_NUMERIC: {
+      widget = lv_label_create(cell);
+      lv_label_set_text(widget, "0");
+      lv_obj_set_style_text_color(widget, lv_color_hex(COLOR_TEXT), 0);
+      lv_obj_set_style_text_font(widget, &lv_font_montserrat_14, 0);
       break;
     }
   }
+
+  ctx->widget = widget;
   return cell;
 }
 
@@ -143,9 +169,9 @@ static lv_obj_t* create_input_widget(
 
 static lv_obj_t* create_input_panel(
   lv_obj_t* parent,
-  const siera_sim_input_t* inputs,
-  uint8_t input_count,
-  siera_sim_t* self)
+  const siera_sim_widget_t* widgets,
+  uint8_t widget_count,
+  siera_sim_ds_io_t* io)
 {
   lv_obj_t* panel = lv_obj_create(parent);
   lv_obj_set_scrollbar_mode(panel, LV_SCROLLBAR_MODE_OFF);
@@ -164,8 +190,8 @@ static lv_obj_t* create_input_panel(
   lv_obj_set_style_pad_row(panel, 10, 0);
   lv_obj_set_style_pad_column(panel, 10, 0);
 
-  for(uint8_t i = 0; i < input_count; i++) {
-    create_input_widget(panel, &inputs[i], &self->input_ctx[i]);
+  for(uint8_t i = 0; i < widget_count; i++) {
+    create_widget(panel, &widgets[i], &io->ctx[i]);
   }
   return panel;
 }
@@ -197,13 +223,13 @@ static lv_obj_t* create_content_area(lv_obj_t* parent, int width, int height)
  * -------------------------------------------------------------------------*/
 
 lv_obj_t* sim_ui_create_screen(
-  int app_width,
-  int app_height,
-  const siera_sim_input_t* inputs,
-  uint8_t input_count,
-  siera_sim_t* self,
-  lv_obj_t** out_content_area,
-  lv_obj_t** out_input_panel)
+  int                       app_width,
+  int                       app_height,
+  const siera_sim_widget_t* widgets,
+  uint8_t                   widget_count,
+  siera_sim_ds_io_t*        io,
+  lv_obj_t**                out_content_area,
+  lv_obj_t**                out_input_panel)
 {
   lv_obj_t* screen = lv_obj_create(NULL);
   lv_obj_set_style_bg_color(screen, lv_color_hex(COLOR_BG), 0);
@@ -223,7 +249,7 @@ lv_obj_t* sim_ui_create_screen(
   lv_obj_set_style_pad_row(main_col, 16, 0);
 
   *out_content_area = create_content_area(main_col, app_width, app_height);
-  *out_input_panel = create_input_panel(main_col, inputs, input_count, self);
+  *out_input_panel = create_input_panel(main_col, widgets, widget_count, io);
 
   return screen;
 }
