@@ -5,7 +5,7 @@
 
 #include "app.h"
 
-static siera_ds_t g_ds;
+static i_siera_ds_t g_ds;
 static siera_timer_t g_timer;
 
 static void on_tick(void* ctx)

@@ -8,7 +8,7 @@
 #define SIM_WINDOW_PADDING 48
 
 /* -------------------------------------------------------------------------
- * Stream API — GPIO
+ * Helpers
  * -------------------------------------------------------------------------*/
 
 static siera_sim_input_ctx_t* find_ctx(siera_sim_t* sim, siera_dsk_t key)
@@ -20,55 +20,104 @@ static siera_sim_input_ctx_t* find_ctx(siera_sim_t* sim, siera_dsk_t key)
   return NULL;
 }
 
-static int gpio_read(void* ctx, siera_dsk_t key, void* buf, size_t size)
+/* -------------------------------------------------------------------------
+ * Stream API — GPIO
+ * -------------------------------------------------------------------------*/
+
+static void gpio_read(i_siera_ds_t* interface, siera_dsk_t key, void* buf)
 {
-  (void)size;
-  siera_sim_t* sim = (siera_sim_t*)ctx;
+  siera_sim_t* sim = ((siera_sim_gpio_stream_t*)interface)->sim;
   siera_sim_input_ctx_t* entry = find_ctx(sim, key);
   if(!entry)
-    return -1;
+    return;
   *(bool*)buf = entry->bool_val;
-  return 0;
 }
 
-static int gpio_write(void* ctx, siera_dsk_t key, const void* buf, size_t size)
+static void gpio_write(i_siera_ds_t* interface, siera_dsk_t key, const void* buf)
 {
-  (void)size;
-  siera_sim_t* sim = (siera_sim_t*)ctx;
-  siera_sim_input_ctx_t* entry = find_ctx(sim, key);
+  siera_sim_gpio_stream_t* stream = (siera_sim_gpio_stream_t*)interface;
+  siera_sim_input_ctx_t* entry = find_ctx(stream->sim, key);
   if(!entry)
-    return -1;
-  entry->bool_val = *(const bool*)buf;
-  return 0;
+    return;
+  bool new_val = *(const bool*)buf;
+  if(entry->bool_val != new_val) {
+    entry->bool_val = new_val;
+    siera_ds_on_change_args_t args = { .key = key, .data = &entry->bool_val };
+    siera_event_publish(&stream->on_change, &args);
+  }
 }
 
-static const siera_ds_stream_api_t gpio_api = { gpio_read, gpio_write };
+static bool gpio_contains(i_siera_ds_t* interface, siera_dsk_t key)
+{
+  siera_sim_t* sim = ((siera_sim_gpio_stream_t*)interface)->sim;
+  return find_ctx(sim, key) != NULL;
+}
+
+static size_t gpio_size(i_siera_ds_t* interface, siera_dsk_t key)
+{
+  (void)interface;
+  (void)key;
+  return sizeof(bool);
+}
+
+static siera_event_t* gpio_on_change(i_siera_ds_t* interface)
+{
+  return &((siera_sim_gpio_stream_t*)interface)->on_change;
+}
+
+static const i_siera_ds_api_t gpio_api = {
+  .read = gpio_read,
+  .write = gpio_write,
+  .contains = gpio_contains,
+  .size = gpio_size,
+  .on_change = gpio_on_change,
+};
 
 /* -------------------------------------------------------------------------
  * Stream API — ADC
  * -------------------------------------------------------------------------*/
 
-static int adc_read(void* ctx, siera_dsk_t key, void* buf, size_t size)
+static void adc_read(i_siera_ds_t* interface, siera_dsk_t key, void* buf)
 {
-  (void)size;
-  siera_sim_t* sim = (siera_sim_t*)ctx;
+  siera_sim_t* sim = ((siera_sim_adc_stream_t*)interface)->sim;
   siera_sim_input_ctx_t* entry = find_ctx(sim, key);
   if(!entry)
-    return -1;
+    return;
   *(uint16_t*)buf = entry->uint16_val;
-  return 0;
 }
 
-static int adc_write(void* ctx, siera_dsk_t key, const void* buf, size_t size)
+static void adc_write(i_siera_ds_t* interface, siera_dsk_t key, const void* buf)
 {
-  (void)ctx;
+  (void)interface;
   (void)key;
   (void)buf;
-  (void)size;
-  return -1; /* ADC is read-only */
 }
 
-static const siera_ds_stream_api_t adc_api = { adc_read, adc_write };
+static bool adc_contains(i_siera_ds_t* interface, siera_dsk_t key)
+{
+  siera_sim_t* sim = ((siera_sim_adc_stream_t*)interface)->sim;
+  return find_ctx(sim, key) != NULL;
+}
+
+static size_t adc_size(i_siera_ds_t* interface, siera_dsk_t key)
+{
+  (void)interface;
+  (void)key;
+  return sizeof(uint16_t);
+}
+
+static siera_event_t* adc_on_change(i_siera_ds_t* interface)
+{
+  return &((siera_sim_adc_stream_t*)interface)->on_change;
+}
+
+static const i_siera_ds_api_t adc_api = {
+  .read = adc_read,
+  .write = adc_write,
+  .contains = adc_contains,
+  .size = adc_size,
+  .on_change = adc_on_change,
+};
 
 /* -------------------------------------------------------------------------
  * Public API
@@ -76,10 +125,15 @@ static const siera_ds_stream_api_t adc_api = { adc_read, adc_write };
 
 void siera_sim_init(siera_sim_t* self, const siera_sim_config_t* cfg)
 {
-  self->gpio_stream.api = &gpio_api;
-  self->gpio_stream.ctx = self;
-  self->adc_stream.api = &adc_api;
-  self->adc_stream.ctx = self;
+  self->gpio_stream.interface.api = &gpio_api;
+  self->gpio_stream.on_change = (siera_event_t){ 0 };
+  siera_event_init(&self->gpio_stream.on_change);
+  self->gpio_stream.sim = self;
+
+  self->adc_stream.interface.api = &adc_api;
+  self->adc_stream.on_change = (siera_event_t){ 0 };
+  siera_event_init(&self->adc_stream.on_change);
+  self->adc_stream.sim = self;
 
   siera_event_init(&self->input_event);
 
@@ -127,12 +181,12 @@ siera_hal_display_t* siera_sim_get_display(siera_sim_t* self)
   return &self->sim_display.interface;
 }
 
-siera_ds_stream_t* siera_sim_get_gpio_stream(siera_sim_t* self)
+i_siera_ds_t* siera_sim_get_gpio_stream(siera_sim_t* self)
 {
-  return &self->gpio_stream;
+  return &self->gpio_stream.interface;
 }
 
-siera_ds_stream_t* siera_sim_get_adc_stream(siera_sim_t* self)
+i_siera_ds_t* siera_sim_get_adc_stream(siera_sim_t* self)
 {
-  return &self->adc_stream;
+  return &self->adc_stream.interface;
 }

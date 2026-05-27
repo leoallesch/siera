@@ -18,8 +18,8 @@ tests:
 
 # Build multi_target example (simulator / posix host)
 examples:
-	cmake -B build/multi_target -S examples/multi_target -DSIERA_PLATFORM=posix
-	cmake --build build/multi_target -- -j$(shell nproc)
+	cmake -B build/hello_siera -S examples/hello_siera -DSIERA_PLATFORM=posix
+	cmake --build build/hello_siera -- -j$(shell nproc)
 
 # Build simulator example
 simulator:

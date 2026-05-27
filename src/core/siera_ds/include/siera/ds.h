@@ -1,62 +1,65 @@
-#ifndef SIERA_DS_H
-#define SIERA_DS_H
+#ifndef DS_H
+#define DS_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
 #include "siera/dsk.h"
-#include "siera/ds_stream.h"
 #include "siera/event.h"
-#include "siera/timer.h"
 
 typedef struct {
   siera_dsk_t key;
   const void* data;
-} siera_ds_on_change_t;
+} siera_ds_on_change_args_t;
 
-typedef enum {
-    SIERA_DS_NONE     = 0,
-    SIERA_DS_READONLY = (1 << 0),
-    SIERA_DS_SILENT   = (1 << 1),
-} siera_ds_flags_t;
+struct i_siera_ds_api_t;
 
 typedef struct {
-    const char             *name;
-    siera_ds_stream_type_t  stream_type;
-    size_t                  size;
-    size_t                  offset;
-    siera_ds_flags_t        flags;
-} siera_ds_entry_t;
+  const struct i_siera_ds_api_t* api;
+} i_siera_ds_t;
 
-extern const siera_ds_entry_t _siera_ds_entry_table[];
+typedef struct i_siera_ds_api_t {
+  void (*read)(i_siera_ds_t* inteface, siera_dsk_t key, void* buf);
+  void (*write)(i_siera_ds_t* inteface, siera_dsk_t key, const void* buf);
+  bool (*contains)(i_siera_ds_t* inteface, siera_dsk_t key);
+  size_t (*size)(i_siera_ds_t* inteface, siera_dsk_t key);
+  siera_event_t* (*on_change)(i_siera_ds_t* inteface);
+} i_siera_ds_api_t;
 
-typedef struct {
-  siera_ds_stream_type_t type;
-  siera_ds_stream_t* stream;
-} siera_ds_stream_binding_t;
+static inline void siera_ds_read(i_siera_ds_t* inteface, siera_dsk_t key, void* buf)
+{
+  return inteface->api->read(inteface, key, buf);
+}
 
-typedef struct {
-  const siera_ds_entry_t* entries;
-  siera_event_t events;
-  siera_timer_mgr_t* timers;
-  uint32_t flush_interval_ms;
-  siera_ds_stream_t* stream_map[SIERA_DS_STREAM_TYPE_COUNT];
-  siera_timer_t flush_timer;
-} siera_ds_t;
+static inline void siera_ds_write(i_siera_ds_t* inteface, siera_dsk_t key, const void* buf)
+{
+  return inteface->api->write(inteface, key, buf);
+}
 
-int siera_ds_init(siera_ds_t* ds,
-  const siera_ds_stream_binding_t* streams,
-  size_t stream_count,
-  siera_timer_mgr_t* timers,
-  uint32_t flush_interval_ms);
-int siera_ds_read(const siera_ds_t* ds, siera_dsk_t key, void* out);
-int siera_ds_write(siera_ds_t* ds, siera_dsk_t key, const void* in);
-void siera_ds_deinit(siera_ds_t* ds);
+static inline bool siera_ds_contains(i_siera_ds_t* inteface, siera_dsk_t key)
+{
+  return inteface->api->contains(inteface, key);
+}
 
-int siera_ds_subscribe_all(siera_ds_t* ds, siera_event_sub_t* sub);
-int siera_ds_unsubscribe_all(siera_ds_t* ds, siera_event_sub_t* sub);
+static inline size_t siera_ds_size(i_siera_ds_t* inteface, siera_dsk_t key)
+{
+  return inteface->api->size(inteface, key);
+}
 
-const char* siera_ds_key_name(siera_dsk_t key);
-size_t siera_ds_key_size(siera_dsk_t key);
-siera_ds_stream_type_t siera_ds_key_stream_type(siera_dsk_t key);
+static inline siera_event_t* siera_ds_on_change(i_siera_ds_t* inteface)
+{
+  return inteface->api->on_change(inteface);
+}
+
+static inline void siera_ds_subscribe_all(i_siera_ds_t* inteface, siera_event_sub_t* sub)
+{
+  siera_event_subscribe(siera_ds_on_change(inteface), sub);
+}
+
+static inline void siera_ds_unsubscribe_all(i_siera_ds_t* inteface, siera_event_sub_t* sub)
+{
+  siera_event_unsubscribe(siera_ds_on_change(inteface), sub);
+}
 
 #endif

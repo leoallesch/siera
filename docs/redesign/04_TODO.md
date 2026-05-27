@@ -64,7 +64,7 @@
 - [ ] `lib/core/siera_ds/include/siera/ds.h`
   - [ ] `siera_ds_stream_binding_t`, `SIERA_DS_STREAM_END`
   - [ ] `siera_ds_config_t` (streams, events ptr, timers ptr, flush_interval_ms)
-  - [ ] `siera_ds_t` (entries, cache, events ptr, timers ptr, flush_interval_ms, dirty, stream_map, flush_timer)
+  - [ ] `i_siera_ds_t` (entries, cache, events ptr, timers ptr, flush_interval_ms, dirty, stream_map, flush_timer)
   - [ ] init, read, write, deinit, key_name, key_size, key_stream_type
   - [ ] No tick (app calls siera_timer_tick directly)
   - [ ] No flush (internal only)

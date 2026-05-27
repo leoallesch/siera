@@ -10,14 +10,14 @@
 typedef struct {
   siera_hal_display_t* display;
   siera_view_t* active;
-  siera_ds_t* ds;
+  i_siera_ds_t* ds;
   siera_event_sub_t sub;
   siera_dsk_t current_view_key;
 } siera_view_mgr_t;
 
 void siera_view_mgr_init(
   siera_view_mgr_t* mgr,
-  siera_ds_t* ds,
+  i_siera_ds_t* ds,
   siera_hal_display_t* display,
   siera_dsk_t current_view_key);
 

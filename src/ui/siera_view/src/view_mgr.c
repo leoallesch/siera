@@ -14,10 +14,10 @@ static void set(siera_view_mgr_t* mgr, siera_view_t* view)
     siera_view_load(mgr->active, siera_hal_display_get_canvas(mgr->display));
 }
 
-static void on_change(const void* data, void* ctx)
+static void on_change(void* ctx, const void* data)
 {
   siera_view_mgr_t* mgr = (siera_view_mgr_t*)ctx;
-  const siera_ds_on_change_t* args = (const siera_ds_on_change_t*)data;
+  const siera_ds_on_change_args_t* args = (const siera_ds_on_change_args_t*)data;
 
   if(args->key == mgr->current_view_key) {
     siera_view_t* view = *(siera_view_t**)args->data;
@@ -27,7 +27,7 @@ static void on_change(const void* data, void* ctx)
 
 void siera_view_mgr_init(
   siera_view_mgr_t* mgr,
-  siera_ds_t* ds,
+  i_siera_ds_t* ds,
   siera_hal_display_t* display,
   siera_dsk_t current_view_key)
 {

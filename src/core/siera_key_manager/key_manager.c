@@ -3,9 +3,9 @@
 static void emit_event(siera_key_manager_t* instance, siera_dsk_t key, siera_key_event_t event)
 {
   siera_key_event_data_t data = {
-    .key   = key,
+    .key = key,
     .event = event,
-    .seq   = instance->seq++,
+    .seq = instance->seq++,
   };
   siera_ds_write(instance->ds, instance->output_key, &data);
 }
@@ -39,16 +39,14 @@ static void process_key(siera_key_manager_t* instance, siera_dsk_t key, bool pre
     if(siera_timer_is_active(&instance->timer))
       siera_timer_stop(instance->timers, &instance->timer);
     emit_event(instance, key, SIERA_KEY_EVENT_RELEASE);
-    emit_event(instance, key, was_long_press
-      ? SIERA_KEY_EVENT_LONGPRESSANDRELEASE
-      : SIERA_KEY_EVENT_PRESSANDRELEASE);
+    emit_event(instance, key, was_long_press ? SIERA_KEY_EVENT_LONGPRESSANDRELEASE : SIERA_KEY_EVENT_PRESSANDRELEASE);
   }
 }
 
-static void on_ds_change(const void* args, void* ctx)
+static void on_ds_change(void* ctx, const void* args)
 {
   siera_key_manager_t* instance = (siera_key_manager_t*)ctx;
-  const siera_ds_on_change_t* change = (const siera_ds_on_change_t*)args;
+  const siera_ds_on_change_args_t* change = (const siera_ds_on_change_args_t*)args;
 
   for(uint8_t i = 0; i < instance->key_count; i++) {
     if(change->key == instance->input_keys[i])
@@ -57,23 +55,23 @@ static void on_ds_change(const void* args, void* ctx)
 }
 
 void siera_key_manager_init(
-  siera_key_manager_t*  instance,
-  siera_ds_t*           ds,
-  siera_timer_mgr_t*    timers,
-  siera_dsk_t        output_key,
-  uint32_t              long_press_duration_ms,
+  siera_key_manager_t* instance,
+  i_siera_ds_t* ds,
+  siera_timer_mgr_t* timers,
+  siera_dsk_t output_key,
+  uint32_t long_press_duration_ms,
   const siera_dsk_t* input_keys,
-  uint8_t               input_keys_count)
+  uint8_t input_keys_count)
 {
-  instance->ds                     = ds;
-  instance->timers                 = timers;
-  instance->output_key             = output_key;
+  instance->ds = ds;
+  instance->timers = timers;
+  instance->output_key = output_key;
   instance->long_press_duration_ms = long_press_duration_ms;
-  instance->seq                    = 0;
-  instance->input_keys             = input_keys;
-  instance->key_count              = input_keys_count;
-  instance->pressed                = false;
-  instance->long_pressed           = false;
+  instance->seq = 0;
+  instance->input_keys = input_keys;
+  instance->key_count = input_keys_count;
+  instance->pressed = false;
+  instance->long_pressed = false;
 
   siera_event_sub_init(&instance->ds_sub, on_ds_change, instance);
   siera_ds_subscribe_all(ds, &instance->ds_sub);

@@ -21,25 +21,26 @@
  *
  *   // Bind to datastream:
  *   siera_ds_stream_binding_t bindings[] = {
- *     { SIERA_DS_ADC, &adc_stream.stream },
+ *     { SIERA_DS_ADC, &adc_stream.interface },
  *   };
  */
 
 typedef struct {
   siera_dsk_t key;
-  uint32_t       channel;
+  uint32_t channel;
 } siera_esp32_ds_adc_channel_t;
 
 typedef struct {
-  siera_ds_stream_t                   stream;
-  siera_hal_adc_t                    *hal;
-  const siera_esp32_ds_adc_channel_t *channels;
-  size_t                              channel_count;
+  i_siera_ds_t interface;
+  siera_event_t on_change;
+  siera_hal_adc_t* hal;
+  const siera_esp32_ds_adc_channel_t* channels;
+  size_t channel_count;
 } siera_esp32_ds_adc_t;
 
-void siera_esp32_ds_adc_init(siera_esp32_ds_adc_t               *self,
-                              siera_hal_adc_t                    *hal,
-                              const siera_esp32_ds_adc_channel_t *channels,
-                              size_t                              channel_count);
+void siera_esp32_ds_adc_init(siera_esp32_ds_adc_t* self,
+  siera_hal_adc_t* hal,
+  const siera_esp32_ds_adc_channel_t* channels,
+  size_t channel_count);
 
 #endif /* SIERA_ESP32_DS_ADC_H */

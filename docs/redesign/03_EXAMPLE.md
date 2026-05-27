@@ -122,7 +122,7 @@ static const siera_ds_stream_binding_t streams[] = {
 // ═════════════════════════════════════════════════════════════
 
 typedef struct {
-    siera_ds_t         *ds;
+    i_siera_ds_t         *ds;
     siera_event_sub_t   sub;
 } display_module_t;
 
@@ -136,7 +136,7 @@ static void display_on_event(const siera_event_t *event, void *ctx) {
     }
 }
 
-static void display_init(display_module_t *mod, siera_ds_t *ds) {
+static void display_init(display_module_t *mod, i_siera_ds_t *ds) {
     mod->ds = ds;
     siera_event_sub_init(&mod->sub, display_on_event, mod);
     siera_event_subscribe(ds->events, &mod->sub);
@@ -145,7 +145,7 @@ static void display_init(display_module_t *mod, siera_ds_t *ds) {
 // ─────────────────────────────────────────────────────────────
 
 typedef struct {
-    siera_ds_t         *ds;
+    i_siera_ds_t         *ds;
     siera_event_sub_t   sub;
     siera_timer_t       check_timer;
     bool armed; uint8_t hour, min;
@@ -173,7 +173,7 @@ static void alarm_check_cb(void *ctx) {
     }
 }
 
-static void alarm_init(alarm_module_t *mod, siera_ds_t *ds) {
+static void alarm_init(alarm_module_t *mod, i_siera_ds_t *ds) {
     mod->ds = ds;
     siera_ds_read(ds, DSK_ALARM_ENABLED, &mod->armed);
     siera_ds_read(ds, DSK_ALARM_HOUR,    &mod->hour);
@@ -186,7 +186,7 @@ static void alarm_init(alarm_module_t *mod, siera_ds_t *ds) {
 
 // ─────────────────────────────────────────────────────────────
 
-typedef struct { siera_ds_t *ds; siera_timer_t poll_timer; bool last_btn; } input_module_t;
+typedef struct { i_siera_ds_t *ds; siera_timer_t poll_timer; bool last_btn; } input_module_t;
 
 static void input_poll_cb(void *ctx) {
     input_module_t *mod = ctx;
@@ -198,7 +198,7 @@ static void input_poll_cb(void *ctx) {
     mod->last_btn = btn;
 }
 
-static void input_init(input_module_t *mod, siera_ds_t *ds) {
+static void input_init(input_module_t *mod, i_siera_ds_t *ds) {
     mod->ds = ds; mod->last_btn = false;
     siera_timer_init(&mod->poll_timer, input_poll_cb, mod);
     siera_timer_start(ds->timers, &mod->poll_timer, 50, SIERA_TIMER_REPEAT);
@@ -206,7 +206,7 @@ static void input_init(input_module_t *mod, siera_ds_t *ds) {
 
 // ─────────────────────────────────────────────────────────────
 
-typedef struct { siera_ds_t *ds; siera_timer_t sample_timer; } sensor_module_t;
+typedef struct { i_siera_ds_t *ds; siera_timer_t sample_timer; } sensor_module_t;
 
 static void sensor_sample_cb(void *ctx) {
     sensor_module_t *mod = ctx;
@@ -215,7 +215,7 @@ static void sensor_sample_cb(void *ctx) {
     siera_ds_write(mod->ds, DSK_BRIGHTNESS, &brightness);
 }
 
-static void sensor_init(sensor_module_t *mod, siera_ds_t *ds) {
+static void sensor_init(sensor_module_t *mod, i_siera_ds_t *ds) {
     mod->ds = ds;
     siera_timer_init(&mod->sample_timer, sensor_sample_cb, mod);
     siera_timer_start(ds->timers, &mod->sample_timer, 200, SIERA_TIMER_REPEAT);
@@ -227,7 +227,7 @@ static void sensor_init(sensor_module_t *mod, siera_ds_t *ds) {
 
 static siera_event_bus_t  g_events;
 static siera_timer_mgr_t  g_timers;
-static siera_ds_t         g_ds;
+static i_siera_ds_t         g_ds;
 static display_module_t   g_display;
 static alarm_module_t     g_alarm;
 static input_module_t     g_input;

@@ -9,8 +9,9 @@
 #include "lvgl.h"
 
 #include "app.h"
+#include "system_dsk.h"
 
-static siera_ds_t g_ds;
+static i_siera_ds_t g_ds;
 static siera_sim_t g_sim;
 static siera_sim_ds_nvs_t g_nvs;
 static siera_event_sub_t g_sim_input_sub;
@@ -27,10 +28,10 @@ static const siera_sim_config_t g_sim_config = {
   .input_count = SIERA_NUM_ELEMENTS(g_sim_inputs),
 };
 
-static void on_sim_input(const void* args, void* ctx)
+static void on_sim_input(void* ctx, const void* args)
 {
   const siera_sim_input_event_t* e = args;
-  siera_ds_write((siera_ds_t*)ctx, e->key, e->val);
+  siera_ds_write((i_siera_ds_t*)ctx, e->key, e->val);
 }
 
 int main(void)
@@ -43,7 +44,7 @@ int main(void)
 
   siera_sim_ds_nvs_init(&g_nvs, "siera_nvs.bin");
   siera_ds_stream_binding_t streams[] = {
-    { SIERA_DS_NVS, &g_nvs.stream },
+    { SIERA_DS_NVS, &g_nvs.interface },
     { SIERA_DS_GPIO, &siera_null_stream },
   };
   siera_ds_init(&g_ds, streams, SIERA_NUM_ELEMENTS(streams), &timers, 0);

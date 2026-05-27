@@ -428,7 +428,7 @@ typedef struct {
     uint32_t                 dirty[(DSK_COUNT + 31) / 32];
     siera_ds_stream_t       *stream_map[SIERA_DS_STREAM_TYPE_COUNT];
     siera_timer_t            flush_timer;
-} siera_ds_t;
+} i_siera_ds_t;
 ```
 
 ### 6.6 Public API
@@ -444,10 +444,10 @@ typedef struct {
 #include "siera/event.h"
 #include "siera/timer.h"
 
-int  siera_ds_init(siera_ds_t *ds, const siera_ds_config_t *config);
-int  siera_ds_read(const siera_ds_t *ds, siera_ds_key_t key, void *out);
-int  siera_ds_write(siera_ds_t *ds, siera_ds_key_t key, const void *in);
-void siera_ds_deinit(siera_ds_t *ds);
+int  siera_ds_init(i_siera_ds_t *ds, const siera_ds_config_t *config);
+int  siera_ds_read(const i_siera_ds_t *ds, siera_ds_key_t key, void *out);
+int  siera_ds_write(i_siera_ds_t *ds, siera_ds_key_t key, const void *in);
+void siera_ds_deinit(i_siera_ds_t *ds);
 
 const char              *siera_ds_key_name(siera_ds_key_t key);
 size_t                   siera_ds_key_size(siera_ds_key_t key);
@@ -467,12 +467,12 @@ No `siera_ds_tick` — the application calls `siera_timer_tick` on the timer man
 #include "ds_keys_internal.h"
 #include <string.h>
 
-static inline siera_ds_stream_t *ds_stream(const siera_ds_t *ds,
+static inline siera_ds_stream_t *ds_stream(const i_siera_ds_t *ds,
                                              siera_ds_stream_type_t type) {
     return (type < SIERA_DS_STREAM_TYPE_COUNT) ? ds->stream_map[type] : NULL;
 }
 
-static int ds_flush(siera_ds_t *ds) {
+static int ds_flush(i_siera_ds_t *ds) {
     siera_ds_stream_t *s = ds_stream(ds, SIERA_DS_NVS);
     if (!s || !s->api->write) return 0;
     int flushed = 0;
@@ -490,9 +490,9 @@ static int ds_flush(siera_ds_t *ds) {
     return flushed;
 }
 
-static void ds_flush_cb(void *ctx) { ds_flush((siera_ds_t *)ctx); }
+static void ds_flush_cb(void *ctx) { ds_flush((i_siera_ds_t *)ctx); }
 
-int siera_ds_init(siera_ds_t *ds, const siera_ds_config_t *config) {
+int siera_ds_init(i_siera_ds_t *ds, const siera_ds_config_t *config) {
     memset(ds, 0, sizeof(*ds));
     ds->entries            = _siera_ds_entry_table;
     ds->events             = config->events;
@@ -529,7 +529,7 @@ int siera_ds_init(siera_ds_t *ds, const siera_ds_config_t *config) {
     return 0;
 }
 
-int siera_ds_read(const siera_ds_t *ds, siera_ds_key_t key, void *out) {
+int siera_ds_read(const i_siera_ds_t *ds, siera_ds_key_t key, void *out) {
     if (key >= DSK_COUNT) return -1;
     const siera_ds_entry_t *e = &ds->entries[key];
 
@@ -537,7 +537,7 @@ int siera_ds_read(const siera_ds_t *ds, siera_ds_key_t key, void *out) {
         siera_ds_stream_t *s = ds_stream(ds, e->stream_type);
         if (s && s->api->read)
             s->api->read(s->ctx, key,
-                         (uint8_t *)&((siera_ds_t *)ds)->cache + e->offset,
+                         (uint8_t *)&((i_siera_ds_t *)ds)->cache + e->offset,
                          e->size);
     }
 
@@ -545,7 +545,7 @@ int siera_ds_read(const siera_ds_t *ds, siera_ds_key_t key, void *out) {
     return 0;
 }
 
-int siera_ds_write(siera_ds_t *ds, siera_ds_key_t key, const void *in) {
+int siera_ds_write(i_siera_ds_t *ds, siera_ds_key_t key, const void *in) {
     if (key >= DSK_COUNT) return -1;
     const siera_ds_entry_t *e = &ds->entries[key];
     if (e->flags & SIERA_DS_READONLY) return -1;
@@ -581,7 +581,7 @@ int siera_ds_write(siera_ds_t *ds, siera_ds_key_t key, const void *in) {
     return 0;
 }
 
-void siera_ds_deinit(siera_ds_t *ds) {
+void siera_ds_deinit(i_siera_ds_t *ds) {
     if (ds->flush_interval_ms > 0 && ds->timers)
         siera_timer_stop(ds->timers, &ds->flush_timer);
     ds_flush(ds);
@@ -609,7 +609,7 @@ Everything is externally owned. The datasource borrows.
 // Application owns these
 static siera_event_bus_t  g_events;
 static siera_timer_mgr_t g_timers;
-static siera_ds_t        g_ds;
+static i_siera_ds_t        g_ds;
 
 int main(void) {
     siera_event_bus_init(&g_events);
@@ -635,7 +635,7 @@ int main(void) {
 
 Module code:
 ```c
-void alarm_init(alarm_module_t *mod, siera_ds_t *ds) {
+void alarm_init(alarm_module_t *mod, i_siera_ds_t *ds) {
     mod->ds = ds;
 
     // Subscribe to ds events via the borrowed event bus

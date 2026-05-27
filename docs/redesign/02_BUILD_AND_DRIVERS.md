@@ -402,7 +402,7 @@ static const siera_ds_stream_api_t mock_adc_api = { mock_adc_read, nullptr };
 
 class SieraDs : public ::testing::Test {
 protected:
-    siera_ds_t ds;
+    i_siera_ds_t ds;
     siera_event_bus_t events;
     siera_timer_mgr_t timers;
     siera_ds_stream_t persist_s = { &mock_persist_api, nullptr };
@@ -445,7 +445,7 @@ TEST_F(SieraDs, PersistWriteThrough) {
     siera_ds_deinit(&ds);
     siera_event_bus_t ev2; siera_timer_mgr_t tm2;
     siera_event_bus_init(&ev2); siera_timer_mgr_init(&tm2, mock_now);
-    siera_ds_t ds2; siera_ds_config_t c2 = { streams, &ev2, &tm2, 0 };
+    i_siera_ds_t ds2; siera_ds_config_t c2 = { streams, &ev2, &tm2, 0 };
     siera_ds_init(&ds2, &c2);
     uint8_t out; siera_ds_read(&ds2, DSK_BRIGHTNESS, &out);
     EXPECT_EQ(out, 99); siera_ds_deinit(&ds2);
@@ -460,7 +460,7 @@ TEST_F(SieraDs, BatchedFlush) {
 
     // Not flushed yet
     s_now = 500; siera_timer_tick(&timers);
-    siera_ds_t ds2; siera_event_bus_t ev2; siera_timer_mgr_t tm2;
+    i_siera_ds_t ds2; siera_event_bus_t ev2; siera_timer_mgr_t tm2;
     siera_event_bus_init(&ev2); siera_timer_mgr_init(&tm2, mock_now);
     siera_ds_config_t c2 = { streams, &ev2, &tm2, 0 };
     siera_ds_init(&ds2, &c2);

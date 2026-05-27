@@ -24,7 +24,7 @@ static const siera_esp32_ds_gpio_pin_t g_gpio_pins[] = {
 
 static void on_blink(void* ctx)
 {
-  siera_ds_t* ds = ctx;
+  i_siera_ds_t* ds = ctx;
 
   bool state;
   siera_ds_read(ds, DSK_LED_STATE, &state);
@@ -37,7 +37,7 @@ static void on_blink(void* ctx)
 static void on_change(const void* args, void* ctx)
 {
   (void)ctx;
-  const siera_ds_on_change_t* e = (const siera_ds_on_change_t*)args;
+  const siera_ds_on_change_args_t* e = (const siera_ds_on_change_args_t*)args;
   bool state;
   /* The data pointer in the event holds the new value directly */
   state = *(const bool*)e->data;
@@ -68,7 +68,7 @@ void app_main(void)
   siera_timer_mgr_init(&timers, timesource);
 
   /* 6. Datastream */
-  static siera_ds_t ds;
+  static i_siera_ds_t ds;
   siera_ds_init(&ds, bindings, 1, &timers, 0);
 
   /* 7. Subscribe to all changes */

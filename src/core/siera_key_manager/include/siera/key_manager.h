@@ -10,31 +10,31 @@
 #include "siera/timer.h"
 
 typedef struct {
-  siera_ds_t*        ds;
+  i_siera_ds_t* ds;
   siera_timer_mgr_t* timers;
 
-  siera_dsk_t        output_key;
+  siera_dsk_t output_key;
   const siera_dsk_t* input_keys;
-  uint8_t               key_count;
+  uint8_t key_count;
 
-  siera_timer_t      timer;
-  uint32_t           long_press_duration_ms;
+  siera_timer_t timer;
+  uint32_t long_press_duration_ms;
 
-  siera_event_sub_t  ds_sub;
-  uint8_t            seq;
+  siera_event_sub_t ds_sub;
+  uint8_t seq;
 
-  siera_dsk_t     current_key;
-  bool               pressed;
-  bool               long_pressed;
+  siera_dsk_t current_key;
+  bool pressed;
+  bool long_pressed;
 } siera_key_manager_t;
 
 void siera_key_manager_init(
-  siera_key_manager_t*  instance,
-  siera_ds_t*           ds,
-  siera_timer_mgr_t*    timers,
-  siera_dsk_t        output_key,
-  uint32_t              long_press_duration_ms,
+  siera_key_manager_t* instance,
+  i_siera_ds_t* ds,
+  siera_timer_mgr_t* timers,
+  siera_dsk_t output_key,
+  uint32_t long_press_duration_ms,
   const siera_dsk_t* input_keys,
-  uint8_t               input_keys_count);
+  uint8_t input_keys_count);
 
 #endif /* SIERA_KEY_MANAGER_H */

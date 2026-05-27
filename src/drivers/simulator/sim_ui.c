@@ -45,16 +45,16 @@ static void sim_publish(siera_sim_input_ctx_t* ctx, const void* val, size_t size
 static void on_button_event(lv_event_t* e)
 {
   siera_sim_input_ctx_t* ctx = lv_event_get_user_data(e);
-  ctx->bool_val = (lv_event_get_code(e) == LV_EVENT_PRESSED);
-  sim_publish(ctx, &ctx->bool_val, sizeof(ctx->bool_val));
+  bool val = (lv_event_get_code(e) == LV_EVENT_PRESSED);
+  sim_publish(ctx, &val, sizeof(val));
 }
 
 static void on_switch_event(lv_event_t* e)
 {
   siera_sim_input_ctx_t* ctx = lv_event_get_user_data(e);
   lv_obj_t* sw = lv_event_get_target(e);
-  ctx->bool_val = lv_obj_has_state(sw, LV_STATE_CHECKED);
-  sim_publish(ctx, &ctx->bool_val, sizeof(ctx->bool_val));
+  bool val = lv_obj_has_state(sw, LV_STATE_CHECKED);
+  sim_publish(ctx, &val, sizeof(val));
 }
 
 static void on_slider_event(lv_event_t* e)
@@ -86,7 +86,7 @@ static lv_obj_t* create_input_widget(
   lv_obj_set_style_pad_row(cell, 10, 0);
 
   lv_obj_t* label = lv_label_create(cell);
-  lv_label_set_text(label, siera_ds_key_name(cfg->key));
+  lv_label_set_text(label, "REPLACE ME");
   lv_obj_set_style_text_color(label, lv_color_hex(COLOR_TEXT_DIM), 0);
   lv_obj_set_style_text_font(label, &lv_font_montserrat_12, 0);
 

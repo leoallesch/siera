@@ -1,7 +1,6 @@
 siera_add_module(
     SRCS     sim_timesource.c
              sim_rtc.c
-             ds/sim_ds_nvs.c
     INCLUDES include
 )
 
